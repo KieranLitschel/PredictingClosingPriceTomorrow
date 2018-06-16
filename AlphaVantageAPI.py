@@ -1,6 +1,6 @@
 import enum
 import json
-import urllib.request
+import requests
 
 
 class AlphaVantage:
@@ -9,14 +9,14 @@ class AlphaVantage:
 
     def getDailyHistory(self, outputsize, symbol):
         if outputsize == OutputSize.FULL:
-            response = urllib.request.urlopen(
+            response = requests.get(
                 "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={0}&outputsize=full&apikey={1}".format(
                     symbol, self.apiKey))
         else:
-            response = urllib.request.urlopen(
+            response = requests.get(
                 "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={0}&apikey={1}".format(symbol,
                                                                                                             self.apiKey))
-        history = json.loads(response.read().decode())
+        history = response.json()
         return history
 
 class OutputSize(enum.Enum):
