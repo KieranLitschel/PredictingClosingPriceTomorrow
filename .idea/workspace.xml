@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4b1007d4-00c6-4255-a518-5756a1ddacaa" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Lib/site-packages/lxml/_elementpath.cp36-win32.pyd" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Lib/site-packages/lxml/etree.cp36-win32.pyd" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Scripts/python.exe" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Scripts/python3.dll" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Scripts/python36.dll" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/venv/Scripts/vcruntime140.dll" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" afterPath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/AlphaVantageAPI.py" afterPath="$PROJECT_DIR$/AlphaVantageAPI.py" />
-      <change beforePath="$PROJECT_DIR$/Database.py" afterPath="$PROJECT_DIR$/Database.py" />
-    </list>
+    <list default="true" id="4b1007d4-00c6-4255-a518-5756a1ddacaa" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
