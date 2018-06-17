@@ -10,12 +10,12 @@ def getSP500Tickers():
     resp = requests.get('http://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     soup = bs.BeautifulSoup(resp.text, 'lxml')
     table = soup.find('table', {'class': 'wikitable sortable'})
-    tickers = []
+    tickersNSectors = []
     for row in table.findAll('tr')[1:]:
         ticker = row.findAll('td')[0].text
         sector = row.findAll('td')[3].text
-        tickers.append((ticker, sector))
-    return tickers
+        tickersNSectors.append((ticker, sector))
+    return tickersNSectors
 
 
 class DBManager:
@@ -27,4 +27,11 @@ class DBManager:
         except Error as e:
             print(e)
 
-    
+    def addNewStock(self, ticker, sector):
+        history = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+        points = list(history.keys())
+        firstDay = points[-1]
+        lastDay = points[0]
+        sql = "INSERT INTO tickers(ticker,sector,firstDay,lastDay) VALUES({0},{1},{2},{3}); ".format(ticker, sector,
+                                                                                                         firstDay,
+                                                                                                         lastDay)

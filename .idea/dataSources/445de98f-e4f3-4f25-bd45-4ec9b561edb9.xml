@@ -1101,84 +1101,99 @@
       <Charset>utf8mb4</Charset>
       <DefaultForCharset>0</DefaultForCharset>
     </collation>
-    <table id="277" parent="5" name="symbols">
+    <table id="277" parent="5" name="tickers">
       <Engine>InnoDB</Engine>
     </table>
     <table id="278" parent="5" name="timeseriesdaily">
       <Engine>InnoDB</Engine>
     </table>
-    <column id="279" parent="277" name="symbol">
+    <column id="279" parent="277" name="ticker">
       <Position>1</Position>
       <DataType>varchar(5)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <index id="280" parent="277" name="symbol_UNIQUE">
-      <ColNames>symbol</ColNames>
+    <column id="280" parent="277" name="sector">
+      <Position>2</Position>
+      <DataType>varchar(30)|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="281" parent="277" name="firstDay">
+      <Position>3</Position>
+      <DataType>date|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="282" parent="277" name="lastDay">
+      <Position>4</Position>
+      <DataType>date|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <index id="283" parent="277" name="symbol_UNIQUE">
+      <ColNames>ticker</ColNames>
       <Unique>1</Unique>
     </index>
-    <key id="281" parent="277" name="PRIMARY">
+    <key id="284" parent="277" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
-      <ColNames>symbol</ColNames>
+      <ColNames>ticker</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="282" parent="277" name="symbol_UNIQUE">
-      <ColNames>symbol</ColNames>
+    <key id="285" parent="277" name="symbol_UNIQUE">
+      <ColNames>ticker</ColNames>
       <UnderlyingIndexName>symbol_UNIQUE</UnderlyingIndexName>
     </key>
-    <column id="283" parent="278" name="symbol">
+    <column id="286" parent="278" name="symbol">
       <Position>1</Position>
       <DataType>varchar(5)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="284" parent="278" name="date">
+    <column id="287" parent="278" name="date">
       <Position>2</Position>
       <DataType>date|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="285" parent="278" name="open">
+    <column id="288" parent="278" name="open">
       <Position>3</Position>
       <DataType>float|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="286" parent="278" name="high">
+    <column id="289" parent="278" name="high">
       <Position>4</Position>
       <DataType>float|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="287" parent="278" name="low">
+    <column id="290" parent="278" name="low">
       <Position>5</Position>
       <DataType>float|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="288" parent="278" name="close">
+    <column id="291" parent="278" name="close">
       <Position>6</Position>
       <DataType>float|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="289" parent="278" name="volume">
+    <column id="292" parent="278" name="volume">
       <Position>7</Position>
       <DataType>int(11)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <key id="290" parent="278" name="PRIMARY">
+    <key id="293" parent="278" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>symbol
 date</ColNames>
       <Primary>1</Primary>
     </key>
-    <foreign-key id="291" parent="278" name="symbol">
+    <foreign-key id="294" parent="278" name="symbol">
       <ColNames>symbol</ColNames>
       <RefSchemaName>stocks</RefSchemaName>
-      <RefTableName>symbols</RefTableName>
-      <RefColNames>symbol</RefColNames>
+      <RefTableName>tickers</RefTableName>
+      <RefColNames>ticker</RefColNames>
       <OnDelete>cascade</OnDelete>
     </foreign-key>
   </database-model>
