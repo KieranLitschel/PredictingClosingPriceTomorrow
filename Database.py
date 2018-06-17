@@ -1,5 +1,8 @@
 import bs4 as bs
 import requests
+import mysql.connector
+from mysql.connector import Error
+import AlphaVantageAPI as AVAPI
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -13,3 +16,15 @@ def getSP500Tickers():
         sector = row.findAll('td')[3].text
         tickers.append((ticker, sector))
     return tickers
+
+
+class DBManager:
+    def __init__(self, apiKey, pwrd):
+        self.av = AVAPI.AlphaVantage(apiKey)
+        # Connect to the database
+        try:
+            self.conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=pwrd)
+        except Error as e:
+            print(e)
+
+    
