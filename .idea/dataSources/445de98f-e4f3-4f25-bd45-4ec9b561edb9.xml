@@ -1141,7 +1141,7 @@
       <ColNames>ticker</ColNames>
       <UnderlyingIndexName>symbol_UNIQUE</UnderlyingIndexName>
     </key>
-    <column id="286" parent="278" name="symbol">
+    <column id="286" parent="278" name="ticker">
       <Position>1</Position>
       <DataType>varchar(5)|0</DataType>
       <NotNull>1</NotNull>
@@ -1179,18 +1179,18 @@
     </column>
     <column id="292" parent="278" name="volume">
       <Position>7</Position>
-      <DataType>int(11)|0</DataType>
+      <DataType>int(15)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
     <key id="293" parent="278" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
-      <ColNames>symbol
+      <ColNames>ticker
 date</ColNames>
       <Primary>1</Primary>
     </key>
     <foreign-key id="294" parent="278" name="symbol">
-      <ColNames>symbol</ColNames>
+      <ColNames>ticker</ColNames>
       <RefSchemaName>stocks</RefSchemaName>
       <RefTableName>tickers</RefTableName>
       <RefColNames>ticker</RefColNames>
