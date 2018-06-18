@@ -31,15 +31,15 @@ class DBManager:
         self.av = AVAPI.AlphaVantage(apiKey)
         self.pwrd = pwrd
 
-    def insert(self, query, args, multi):
+    def insert(self, query, args, many):
         try:
             conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
-            if multi:
+            if many:
+                # If this fails you may need to increase the size of max_allowed_packet in the my.ini file for the
+                # server
                 cursor.executemany(query, args)
             else:
-                # Tells the server to expect packets up 500MB in this session (1MB default)
-                cursor.execute('SET SESSION max_allowed_packet=500M')
                 cursor.execute(query, args)
             conn.commit()
         except Error as e:
