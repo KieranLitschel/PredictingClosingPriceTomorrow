@@ -38,6 +38,8 @@ class DBManager:
             if multi:
                 cursor.executemany(query, args)
             else:
+                # Tells the server to expect packets up 500MB in this session (1MB default)
+                cursor.execute('SET SESSION max_allowed_packet=500M')
                 cursor.execute(query, args)
             conn.commit()
         except Error as e:
