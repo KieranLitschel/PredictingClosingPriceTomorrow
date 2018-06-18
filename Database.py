@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import MySQLConnection, Error
 import AlphaVantageAPI as AVAPI
 import datetime
+import time
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -64,6 +65,46 @@ class DBManager:
             close = float(pointInHistory.get('4. close'))
             volume = int(pointInHistory.get('5. volume'))
             args.append((ticker, date, open, high, low, close, volume))
+        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        self.insert(query, args, True)
+
+    def addManyNewStocks(self, tickersNSector):
+        history = {}
+        completed = 0
+        args = []
+        for (ticker, sector) in tickersNSector:
+            print("%.2f%% complete." % (completed * 100 / len(tickersNSector)))
+            history[ticker] = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+            # The API sometimes does not return the response we require if its overloaded, in which case we wait a bit
+            # and try again
+            while history[ticker] is None:
+                print('Failed on ticker %s of %s. Retrying.' % (completed, len(tickersNSector)))
+                time.sleep(1.5)
+                history[ticker] = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+                if not (history[ticker] is None):
+                    print('Recovered successfully.')
+            points = list(history[ticker].keys())
+            firstDay = pointToDate(points[-1])
+            lastDay = pointToDate(points[0])
+            args.append((ticker, sector, firstDay, lastDay))
+            time.sleep(1.5)  # Can only make ~1 request to the API per second
+            completed += 1
+        query = "INSERT INTO tickers(ticker,sector,firstDay,lastDay) " \
+                "VALUES(%s,%s,DATE(%s),DATE(%s))"
+        self.insert(query, args, True)
+        args = []
+        for (ticker, sector) in tickersNSector:
+            points = history[ticker].keys()
+            for point in points:
+                pointInHistory = history.get(ticker).get(point)
+                date = pointToDate(point)
+                open = float(pointInHistory.get('1. open'))
+                high = float(pointInHistory.get('2. high'))
+                low = float(pointInHistory.get('3. low'))
+                close = float(pointInHistory.get('4. close'))
+                volume = int(pointInHistory.get('5. volume'))
+                args.append((ticker, date, open, high, low, close, volume))
         query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, args, True)

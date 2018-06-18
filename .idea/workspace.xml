@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4b1007d4-00c6-4255-a518-5756a1ddacaa" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" afterPath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" />
       <change beforePath="$PROJECT_DIR$/Database.py" afterPath="$PROJECT_DIR$/Database.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -64,8 +63,8 @@
       <file leaf-file-name="AlphaVantageAPI.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="378">
-              <caret line="18" column="22" lean-forward="false" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
+            <state relative-caret-position="336">
+              <caret line="16" column="18" lean-forward="true" selection-start-line="16" selection-start-column="18" selection-end-line="16" selection-end-column="18" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -76,15 +75,17 @@
       <file leaf-file-name="Database.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Database.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="753">
-              <caret line="69" column="0" lean-forward="true" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+            <state relative-caret-position="328">
+              <caret line="81" column="39" lean-forward="false" selection-start-line="81" selection-start-column="39" selection-end-line="81" selection-end-column="39" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
-                <marker date="1529336304132" expanded="true" signature="1741:1792" ph="INSERT INTO tickers... " />
-                <marker date="1529336304132" expanded="true" signature="1741:1793" ph="INSERT INTO tickers... " />
-                <marker date="1529336304132" expanded="true" signature="1741:1845" ph="INSERT INTO tickers... " />
-                <marker date="1529336304132" expanded="true" signature="2442:2509" ph="INSERT INTO timeseriesdaily... " />
-                <marker date="1529336304132" expanded="true" signature="2442:2565" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529340331902" expanded="true" signature="1753:1804" ph="INSERT INTO tickers... " />
+                <marker date="1529340331902" expanded="true" signature="1753:1805" ph="INSERT INTO tickers... " />
+                <marker date="1529340331902" expanded="true" signature="1753:1857" ph="INSERT INTO tickers... " />
+                <marker date="1529340331902" expanded="true" signature="2454:2521" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529340331902" expanded="true" signature="2454:2577" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529340331902" expanded="true" signature="3777:3881" ph="INSERT INTO tickers... " />
+                <marker date="1529340331902" expanded="true" signature="4566:4689" ph="INSERT INTO timeseriesdaily... " />
               </folding>
             </state>
           </provider>
@@ -243,11 +244,12 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="2578" height="1408" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3256917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3256917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32988048" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1203125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -297,11 +299,13 @@
           <caret line="1" column="15" lean-forward="true" selection-start-line="1" selection-start-column="15" selection-end-line="1" selection-end-column="15" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1529336304132" expanded="true" signature="1741:1792" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="1741:1793" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="1741:1845" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="2442:2509" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529336304132" expanded="true" signature="2442:2565" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1804" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1805" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1857" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="2454:2521" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="2454:2577" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="3777:3881" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="4566:4689" ph="INSERT INTO timeseriesdaily... " />
           </folding>
         </state>
       </provider>
@@ -366,16 +370,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="378">
-          <caret line="18" column="22" lean-forward="false" selection-start-line="18" selection-start-column="22" selection-end-line="18" selection-end-column="22" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="uml://DATABASE/445de98f-e4f3-4f25-bd45-4ec9b561edb9.SCHEMA:stocks">
       <provider selected="true" editor-type-id="UmlEditorProvider">
         <state>
@@ -396,17 +390,29 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="336">
+          <caret line="16" column="18" lean-forward="true" selection-start-line="16" selection-start-column="18" selection-end-line="16" selection-end-column="18" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Database.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="753">
-          <caret line="69" column="0" lean-forward="true" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+        <state relative-caret-position="328">
+          <caret line="81" column="39" lean-forward="false" selection-start-line="81" selection-start-column="39" selection-end-line="81" selection-end-column="39" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1529336304132" expanded="true" signature="1741:1792" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="1741:1793" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="1741:1845" ph="INSERT INTO tickers... " />
-            <marker date="1529336304132" expanded="true" signature="2442:2509" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529336304132" expanded="true" signature="2442:2565" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1804" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1805" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="1753:1857" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="2454:2521" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="2454:2577" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529340331902" expanded="true" signature="3777:3881" ph="INSERT INTO tickers... " />
+            <marker date="1529340331902" expanded="true" signature="4566:4689" ph="INSERT INTO timeseriesdaily... " />
           </folding>
         </state>
       </provider>
