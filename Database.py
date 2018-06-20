@@ -2,7 +2,7 @@ import bs4 as bs
 import requests
 import mysql.connector
 from mysql.connector import MySQLConnection, Error
-import AlphaVantageAPI as AVAPI
+import AlphaVantageWrapper as AVW
 import datetime
 import time
 
@@ -28,7 +28,7 @@ def pointToDate(point):
 
 class DBManager:
     def __init__(self, apiKey, pwrd):
-        self.av = AVAPI.AlphaVantage(apiKey)
+        self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
 
     def insert(self, query, args, many):
@@ -38,7 +38,19 @@ class DBManager:
             if many:
                 # If this fails you may need to increase the size of max_allowed_packet in the my.ini file for the
                 # server
-                cursor.executemany(query, args)
+                if len(args) > 100000:
+                    # Implemented this as I found that if the insertion had more than 100k args it failed
+                    print('Beginning batch insertion into the database...')
+                    batchNo = 1
+                    for i in range(100000, len(args), 100000):
+                        print('Inserting %s to %s' % (i - 100000, i))
+                        cursor.executemany(query, args[i - 100000: i])
+                        batchNo += 1
+                    if i < len(args) - 1:
+                        print('Inserting %s to %s' % (i, len(args)))
+                        cursor.executemany(query, args[i: len(args)])
+                else:
+                    cursor.executemany(query, args)
             else:
                 cursor.execute(query, args)
             conn.commit()
@@ -48,8 +60,20 @@ class DBManager:
             cursor.close()
             conn.close()
 
+    def select(self, query, args):
+        try:
+            conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+            return cursor.fetchall()
+        except Error as e:
+            print(e)
+        finally:
+            cursor.close()
+            conn.close()
+
     def addNewStock(self, ticker, sector):
-        history = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+        history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
         points = list(history.keys())
         firstDay = pointToDate(points[-1])
         lastDay = pointToDate(points[0])
@@ -71,19 +95,19 @@ class DBManager:
                 "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, args, True)
 
-    def addManyNewStocks(self, tickersNSector):
+    def addManyNewStocks(self, tickersNSectors):
         history = {}
         completed = 0
         args = []
-        for (ticker, sector) in tickersNSector:
-            print("%.2f%% complete." % (completed * 100 / len(tickersNSector)))
-            history[ticker] = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+        for (ticker, sector) in tickersNSectors:
+            print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
+            history[ticker] = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             # The API sometimes does not return the response we require if its overloaded, in which case we wait a bit
             # and try again
             while history[ticker] is None:
-                print('Failed on ticker %s of %s. Retrying.' % (completed, len(tickersNSector)))
+                print('Failed on ticker %s of %s. Retrying...' % (completed, len(tickersNSectors)))
                 time.sleep(1.5)
-                history[ticker] = self.av.getDailyHistory(AVAPI.OutputSize.FULL, ticker)
+                history[ticker] = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
                 if not (history[ticker] is None):
                     print('Recovered successfully.')
             points = list(history[ticker].keys())
@@ -96,7 +120,7 @@ class DBManager:
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
         self.insert(query, args, True)
         args = []
-        for (ticker, sector) in tickersNSector:
+        for (ticker, sector) in tickersNSectors:
             points = history[ticker].keys()
             for point in points:
                 pointInHistory = history.get(ticker).get(point)

@@ -1179,7 +1179,7 @@
     </column>
     <column id="292" parent="278" name="volume">
       <Position>7</Position>
-      <DataType>int(15)|0</DataType>
+      <DataType>bigint(20)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
