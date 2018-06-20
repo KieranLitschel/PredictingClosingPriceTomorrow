@@ -2,6 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4b1007d4-00c6-4255-a518-5756a1ddacaa" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/35a8d9b9-5709-4bb3-a067-20983c89f667.xml" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" afterPath="$PROJECT_DIR$/.idea/dataSources/445de98f-e4f3-4f25-bd45-4ec9b561edb9.xml" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/a41eb12d-2cb3-4784-b44b-8f3b0ebf477a.xml" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/Database.py" afterPath="$PROJECT_DIR$/Database.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -60,11 +64,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-      <file leaf-file-name="AlphaVantageAPI.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
+      <file leaf-file-name="AlphaVantageWrapper.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/AlphaVantageWrapper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="336">
-              <caret line="16" column="18" lean-forward="true" selection-start-line="16" selection-start-column="18" selection-end-line="16" selection-end-column="18" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -75,28 +79,18 @@
       <file leaf-file-name="Database.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Database.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="438">
-              <caret line="39" column="18" lean-forward="false" selection-start-line="39" selection-start-column="18" selection-end-line="39" selection-end-column="18" />
+            <state relative-caret-position="-1431">
+              <caret line="36" column="31" lean-forward="true" selection-start-line="36" selection-start-column="31" selection-end-line="36" selection-end-column="31" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
-                <marker date="1529347502138" expanded="true" signature="1891:1942" ph="INSERT INTO tickers... " />
-                <marker date="1529347502138" expanded="true" signature="1891:1943" ph="INSERT INTO tickers... " />
-                <marker date="1529347502138" expanded="true" signature="1891:1995" ph="INSERT INTO tickers... " />
-                <marker date="1529347502138" expanded="true" signature="2592:2659" ph="INSERT INTO timeseriesdaily... " />
-                <marker date="1529347502138" expanded="true" signature="2592:2715" ph="INSERT INTO timeseriesdaily... " />
-                <marker date="1529347502138" expanded="true" signature="3915:4019" ph="INSERT INTO tickers... " />
-                <marker date="1529347502138" expanded="true" signature="4704:4827" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+                <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+                <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+                <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+                <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+                <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/site-packages/mysql/connector/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-33">
-              <caret line="132" column="4" lean-forward="false" selection-start-line="132" selection-start-column="4" selection-end-line="132" selection-end-column="4" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -122,6 +116,10 @@
         <option value="$APPLICATION_CONFIG_DIR$/consoles/db/a41eb12d-2cb3-4784-b44b-8f3b0ebf477a/console.sql" />
         <option value="$APPLICATION_CONFIG_DIR$/consoles/db/35a8d9b9-5709-4bb3-a067-20983c89f667/console.sql" />
         <option value="$PROJECT_DIR$/AlphaVantageAPI.py" />
+        <option value="src:table:/cc918ed3/445de98f-e4f3-4f25-bd45-4ec9b561edb9/stocks.timeseriesdaily" />
+        <option value="$PROJECT_DIR$/TestDatabase.py" />
+        <option value="$PROJECT_DIR$/Tests.py" />
+        <option value="$PROJECT_DIR$/Test.py" />
         <option value="$PROJECT_DIR$/Database.py" />
       </list>
     </option>
@@ -133,8 +131,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="813" />
-    <option name="width" value="1755" />
+    <option name="x" value="-8" />
+    <option name="width" value="1296" />
     <option name="height" value="1398" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -155,8 +153,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -244,7 +242,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="2578" height="1408" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -252,10 +249,9 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3256917" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32988048" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1203125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1203125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.50703126" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964426" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.80751175" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -265,8 +261,9 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
-      <window_info id="Database Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964426" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Database Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964426" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32964426" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -283,10 +280,10 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
+    <entry file="file://$PROJECT_DIR$/AlphaVantageWrapper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="42">
-          <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
@@ -295,17 +292,109 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Database.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1239">
+          <caret line="65" column="34" lean-forward="true" selection-start-line="65" selection-start-column="34" selection-end-line="65" selection-end-column="34" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+            <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="18" column="49" lean-forward="true" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py" />
+    <entry file="das://src:table:/cc918ed3/445de98f-e4f3-4f25-bd45-4ec9b561edb9/stocks.timeseriesdaily">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/site-packages/mysql/connector/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2499">
+          <caret line="132" column="4" lean-forward="false" selection-start-line="132" selection-start-column="4" selection-end-line="132" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2163">
+          <caret line="109" column="43" lean-forward="false" selection-start-line="107" selection-start-column="8" selection-end-line="121" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+            <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py" />
+    <entry file="das://src:table:/cc918ed3/445de98f-e4f3-4f25-bd45-4ec9b561edb9/stocks.timeseriesdaily">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="2" lean-forward="false" selection-start-line="0" selection-start-column="2" selection-end-line="0" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/site-packages/mysql/connector/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2499">
+          <caret line="132" column="4" lean-forward="false" selection-start-line="132" selection-start-column="4" selection-end-line="132" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2184">
+          <caret line="110" column="51" lean-forward="false" selection-start-line="110" selection-start-column="51" selection-end-line="110" selection-end-column="51" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+            <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py" />
+    <entry file="file://$PROJECT_DIR$/Database.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="21">
           <caret line="1" column="15" lean-forward="true" selection-start-line="1" selection-start-column="15" selection-end-line="1" selection-end-column="15" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1529347502138" expanded="true" signature="1891:1942" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="1891:1943" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="1891:1995" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="2592:2659" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529347502138" expanded="true" signature="2592:2715" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529347502138" expanded="true" signature="3915:4019" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="4704:4827" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
           </folding>
         </state>
       </provider>
@@ -320,7 +409,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -328,7 +416,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="21">
           <caret line="1" column="0" lean-forward="true" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -350,7 +437,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -358,15 +444,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/site-packages/mysql/connector/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-33">
-          <caret line="132" column="4" lean-forward="false" selection-start-line="132" selection-start-column="4" selection-end-line="132" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -381,38 +458,64 @@
           </nodes>
           <notes />
           <edges />
-          <settings layout="Hierarchic Group" zoom="1.0" x="92.0" y="210.5" />
+          <settings layout="Hierarchic Group" zoom="1.0" x="92.0" y="211.0" />
           <SelectedNodes />
           <Categories>
-            <Category>Key columns</Category>
             <Category>Columns</Category>
+            <Category>Key columns</Category>
           </Categories>
+          <SCOPE>All</SCOPE>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py">
+    <entry file="file://$PROJECT_DIR$/AlphaVantageAPI.py" />
+    <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/site-packages/mysql/connector/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="16" column="18" lean-forward="true" selection-start-line="16" selection-start-column="18" selection-end-line="16" selection-end-column="18" />
+        <state relative-caret-position="2202">
+          <caret line="132" column="4" lean-forward="false" selection-start-line="132" selection-start-column="4" selection-end-line="132" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="das://src:table:/cc918ed3/445de98f-e4f3-4f25-bd45-4ec9b561edb9/stocks.timeseriesdaily">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Tests.py" />
+    <entry file="file://$PROJECT_DIR$/AlphaVantageWrapper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="18" column="49" lean-forward="false" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Database.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="438">
-          <caret line="39" column="18" lean-forward="false" selection-start-line="39" selection-start-column="18" selection-end-line="39" selection-end-column="18" />
+        <state relative-caret-position="-1431">
+          <caret line="36" column="31" lean-forward="true" selection-start-line="36" selection-start-column="31" selection-end-line="36" selection-end-column="31" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1529347502138" expanded="true" signature="1891:1942" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="1891:1943" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="1891:1995" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="2592:2659" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529347502138" expanded="true" signature="2592:2715" ph="INSERT INTO timeseriesdaily... " />
-            <marker date="1529347502138" expanded="true" signature="3915:4019" ph="INSERT INTO tickers... " />
-            <marker date="1529347502138" expanded="true" signature="4704:4827" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3032" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3033" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="2981:3085" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3749" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="3682:3805" ph="INSERT INTO timeseriesdaily... " />
+            <marker date="1529510362090" expanded="true" signature="5028:5132" ph="INSERT INTO tickers... " />
+            <marker date="1529510362090" expanded="true" signature="5818:5941" ph="INSERT INTO timeseriesdaily... " />
           </folding>
         </state>
       </provider>
