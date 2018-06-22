@@ -140,9 +140,10 @@ class DBManager:
                 points = history.keys()
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
                 time.sleep(1)  # Can only make ~1 request to the API per second
-                completed += 1
+            completed += 1
         query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, insertArgs, True)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
         self.insert(query, updateArgs, True)
+        print('All stocks updated')
