@@ -31,7 +31,7 @@ class DBManager:
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
 
-    def insert(self, query, args, many):
+    def insert(self, query, args, many=False):
         try:
             conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
@@ -72,65 +72,77 @@ class DBManager:
             cursor.close()
             conn.close()
 
-    def addNewStock(self, ticker, sector):
-        history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
-        points = list(history.keys())
-        firstDay = pointToDate(points[-1])
-        lastDay = pointToDate(points[0])
-        query = "INSERT INTO tickers(ticker,sector,firstDay,lastDay) " \
-                "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        args = (ticker, sector, firstDay, lastDay)
-        self.insert(query, args, False)
-        args = []
+    def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
         for point in points:
             pointInHistory = history.get(point)
             date = pointToDate(point)
-            open = float(pointInHistory.get('1. open'))
-            high = float(pointInHistory.get('2. high'))
-            low = float(pointInHistory.get('3. low'))
-            close = float(pointInHistory.get('4. close'))
-            volume = int(pointInHistory.get('5. volume'))
-            args.append((ticker, date, open, high, low, close, volume))
-        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
-        self.insert(query, args, True)
-
-    def addManyNewStocks(self, tickersNSectors):
-        history = {}
-        completed = 0
-        args = []
-        for (ticker, sector) in tickersNSectors:
-            print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
-            history[ticker] = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
-            # The API sometimes does not return the response we require if its overloaded, in which case we wait a bit
-            # and try again
-            while history[ticker] is None:
-                print('Failed on ticker %s of %s. Retrying...' % (completed, len(tickersNSectors)))
-                time.sleep(1.5)
-                history[ticker] = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
-                if not (history[ticker] is None):
-                    print('Recovered successfully.')
-            points = list(history[ticker].keys())
-            firstDay = pointToDate(points[-1])
-            lastDay = pointToDate(points[0])
-            args.append((ticker, sector, firstDay, lastDay))
-            time.sleep(1.5)  # Can only make ~1 request to the API per second
-            completed += 1
-        query = "INSERT INTO tickers(ticker,sector,firstDay,lastDay) " \
-                "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        self.insert(query, args, True)
-        args = []
-        for (ticker, sector) in tickersNSectors:
-            points = history[ticker].keys()
-            for point in points:
-                pointInHistory = history.get(ticker).get(point)
-                date = pointToDate(point)
+            # We do not add records to the database that are recorded as today, as the values vary over the day
+            if (date - lastUpdated).days > 0 and (date - datetime.date.today()).days != 0:
                 open = float(pointInHistory.get('1. open'))
                 high = float(pointInHistory.get('2. high'))
                 low = float(pointInHistory.get('3. low'))
                 close = float(pointInHistory.get('4. close'))
                 volume = int(pointInHistory.get('5. volume'))
                 args.append((ticker, date, open, high, low, close, volume))
+
+    def addNewStock(self, ticker, sector):
+        lastUpdated = datetime.date.today()
+        history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
+        points = list(history.keys())
+        firstDay = pointToDate(points[-1])
+        query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
+                "VALUES(%s,%s,DATE(%s),DATE(%s))"
+        args = (ticker, sector, firstDay, lastUpdated)
+        self.insert(query, args)
+        args = []
+        self.timeseriesToArgs(ticker, points, history, args)
         query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, args, True)
+
+    def addManyNewStocks(self, tickersNSectors):
+        completed = 0
+        tickersArgs = []
+        timeseriesArgs = []
+        for (ticker, sector) in tickersNSectors:
+            print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
+            lastUpdated = datetime.date.today()
+            history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
+            points = list(history.keys())
+            firstDay = pointToDate(points[-1])
+            tickersArgs.append((ticker, sector, firstDay, lastUpdated))
+            self.timeseriesToArgs(ticker, points, history, timeseriesArgs)
+            time.sleep(1)  # Can only make ~1 request to the API per second
+            completed += 1
+        query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
+                "VALUES(%s,%s,DATE(%s),DATE(%s))"
+        self.insert(query, tickersArgs, True)
+        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        self.insert(query, timeseriesArgs, True)
+
+    def updateAllStocks(self):
+        tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
+        insertArgs = []
+        updateArgs = []
+        completed = 0
+        for (ticker, lastUpdated) in tickersNLastUpdated:
+            print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNLastUpdated)))
+            if (lastUpdated - datetime.date.today()).days != 0:
+                # It's neccessary to keep track of today as bugs can occur if an update occurs over 2 days e.g. if it is
+                # started at 11:59pm one night and continues into the next day
+                today = datetime.date.today()
+                updateArgs.append((today, ticker))
+                if (today - lastUpdated).days > 100:
+                    history = self.av.getDailyHistory(AVW.OutputSize.COMPACT, ticker)
+                else:
+                    history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
+                points = history.keys()
+                self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
+                time.sleep(1)  # Can only make ~1 request to the API per second
+                completed += 1
+        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        self.insert(query, insertArgs, True)
+        query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
+        self.insert(query, updateArgs, True)
