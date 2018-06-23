@@ -73,6 +73,7 @@ class DBManager:
             conn.close()
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
+        positionOfPrev = 1
         for point in points:
             pointInHistory = history.get(point)
             date = pointToDate(point)
@@ -83,7 +84,16 @@ class DBManager:
                 low = float(pointInHistory.get('3. low'))
                 close = float(pointInHistory.get('4. close'))
                 volume = int(pointInHistory.get('5. volume'))
-                args.append((ticker, date, open, high, low, close, volume))
+                if positionOfPrev == len(points):
+                    if lastUpdated == datetime.date.min:
+                        prevDate = datetime.date.min
+                    else:
+                        result = self.select("SELECT MAX(date) FROM timeseriesdaily WHERE ticker = %s", (ticker,))
+                        prevDate = result[0][0]
+                else:
+                    prevDate = points[positionOfPrev]
+                args.append((ticker, date, prevDate, open, high, low, close, volume))
+            positionOfPrev += 1
 
     def addNewStock(self, ticker, sector):
         lastUpdated = datetime.date.today()
@@ -96,8 +106,8 @@ class DBManager:
         self.insert(query, args)
         args = []
         self.timeseriesToArgs(ticker, points, history, args)
-        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, args, True)
 
     def addManyNewStocks(self, tickersNSectors):
@@ -117,9 +127,10 @@ class DBManager:
         query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
         self.insert(query, tickersArgs, True)
-        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, timeseriesArgs, True)
+        print('All stocks added')
 
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
@@ -137,12 +148,12 @@ class DBManager:
                     history = self.av.getDailyHistory(AVW.OutputSize.COMPACT, ticker)
                 else:
                     history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
-                points = history.keys()
+                points = list(history.keys())
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
                 time.sleep(1)  # Can only make ~1 request to the API per second
             completed += 1
-        query = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s)"
+        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
+                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, insertArgs, True)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
         self.insert(query, updateArgs, True)
