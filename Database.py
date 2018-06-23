@@ -108,6 +108,7 @@ class DBManager:
         self.timeseriesToArgs(ticker, points, history, args)
         query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
+        self.updateClosePChange()
         self.insert(query, args, True)
 
     def addManyNewStocks(self, tickersNSectors):
@@ -130,6 +131,10 @@ class DBManager:
         query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
         self.insert(query, timeseriesArgs, True)
+        start = datetime.datetime.today()
+        self.updateClosePChange()
+        finish = datetime.datetime.today()
+        print('Took %s seconds to update change' % (finish-start).seconds)
         print('All stocks added')
 
     def updateAllStocks(self):
@@ -157,4 +162,25 @@ class DBManager:
         self.insert(query, insertArgs, True)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
         self.insert(query, updateArgs, True)
+        self.updateClosePChange()
         print('All stocks updated')
+
+    def updateClosePChange(self):
+        query = "SELECT t1.ticker, t1.date, t2.close AS closeBefore, t1.close AS closeAfter " \
+                "FROM timeseriesdaily AS t1 " \
+                "INNER JOIN timeseriesdaily AS t2 " \
+                "ON t1.prevDate = t2.date " \
+                "AND t1.ticker = t2.ticker " \
+                "AND t1.closePChange IS null " \
+                "AND t1.date != '0001-01-01'"
+        datesNCloses = self.select(query, ())
+        args = []
+        for datesNClose in datesNCloses:
+            ticker = datesNClose[0]
+            date = datesNClose[1]
+            closeBefore = datesNClose[2]
+            closeAfter = datesNClose[3]
+            closePCHange = ((closeAfter - closeBefore) / closeBefore) * 100
+            args.append((closePCHange, ticker, date))
+        query = "UPDATE timeseriesdaily SET closePChange = %s WHERE ticker = %s AND date = %s"
+        self.insert(query, args, True)
