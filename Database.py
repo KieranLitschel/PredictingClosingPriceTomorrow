@@ -30,12 +30,14 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume,closePChange) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s)"
 
-    def insert(self, query, args):
+    def insert(self, query, args, many=False):
         try:
             conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
-            if len(args) > 1:
+            if many:
                 # If this fails you may need to increase the size of max_allowed_packet in the my.ini file for the
                 # server
                 if len(args) > 100000:
@@ -74,6 +76,10 @@ class DBManager:
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
         positionOfPrev = 1
+        if lastUpdated == datetime.date.min:
+            addingNewStock = True
+        else:
+            addingNewStock = False
         for point in points:
             pointInHistory = history.get(point)
             date = pointToDate(point)
@@ -85,14 +91,19 @@ class DBManager:
                 close = float(pointInHistory.get('4. close'))
                 volume = int(pointInHistory.get('5. volume'))
                 if positionOfPrev == len(points):
-                    if lastUpdated == datetime.date.min:
+                    if addingNewStock:
                         prevDate = datetime.date.min
+                        closePCHange = 0
                     else:
-                        result = self.select("SELECT MAX(date) FROM timeseriesdaily WHERE ticker = %s", (ticker,))
+                        result = self.select("SELECT MAX(date),close FROM timeseriesdaily WHERE ticker = %s", (ticker,))
                         prevDate = result[0][0]
+                        closeBefore = result[0][1]
+                        closePCHange = ((close - closeBefore) / closeBefore) * 100
                 else:
-                    prevDate = points[positionOfPrev]
-                args.append((ticker, date, prevDate, open, high, low, close, volume))
+                    prevDate = pointToDate(points[positionOfPrev])
+                    closeBefore = float(history.get(points[positionOfPrev]).get('4. close'))
+                    closePCHange = ((close - closeBefore) / closeBefore) * 100
+                args.append((ticker, date, prevDate, open, high, low, close, volume, closePCHange))
             positionOfPrev += 1
 
     def addNewStock(self, ticker, sector):
@@ -106,11 +117,9 @@ class DBManager:
         self.insert(query, args)
         args = []
         self.timeseriesToArgs(ticker, points, history, args)
-        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
-        self.updateClosePChange()
-        self.markAsErrenous()
-        self.insert(query, args)
+        self.insert(self.insertAllTSDQuery, args, True)
+        self.markAsAnomaly()
+        print('Stock added successfully')
 
     def addManyNewStocks(self, tickersNSectors):
         completed = 0
@@ -128,12 +137,9 @@ class DBManager:
             completed += 1
         query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        self.insert(query, tickersArgs)
-        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
-        self.insert(query, timeseriesArgs)
-        self.updateClosePChange()
-        self.markAsErrenous()
+        self.insert(query, tickersArgs, True)
+        self.insert(self.insertAllTSDQuery, timeseriesArgs, True)
+        self.markAsAnomaly()
         print('All stocks added')
 
     def updateAllStocks(self):
@@ -156,42 +162,27 @@ class DBManager:
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
                 time.sleep(1)  # Can only make ~1 request to the API per second
             completed += 1
-        query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
-                "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
-        self.insert(query, insertArgs)
+        self.insert(self.insertAllTSDQuery, insertArgs, True)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
-        self.insert(query, updateArgs)
-        self.updateClosePChange()
-        self.markAsErrenous()
+        self.insert(query, updateArgs, True)
+        self.markAsAnomaly()
         print('All stocks updated')
-
-    def updateClosePChange(self):
-        query = "SELECT t1.ticker, t1.date, t2.close AS closeBefore, t1.close AS closeAfter " \
-                "FROM timeseriesdaily AS t1 " \
-                "INNER JOIN timeseriesdaily AS t2 " \
-                "ON t1.prevDate = t2.date " \
-                "AND t1.ticker = t2.ticker " \
-                "AND t1.closePChange IS null " \
-                "AND t1.date != '0001-01-01'"
-        datesNCloses = self.select(query, ())
-        args = []
-        for datesNClose in datesNCloses:
-            ticker = datesNClose[0]
-            date = datesNClose[1]
-            closeBefore = datesNClose[2]
-            closeAfter = datesNClose[3]
-            closePCHange = ((closeAfter - closeBefore) / closeBefore) * 100
-            args.append((closePCHange, ticker, date))
-        query = "UPDATE timeseriesdaily SET closePChange = %s WHERE ticker = %s AND date = %s"
-        self.insert(query, args)
 
     # There are anomalies in some of the date, so where we find these we mark anomaly as true so that they can be
     # ignored
-    def markAsAnomaly(self):
+    def markAsAnomaly(self, ticker=None):
         query = "SELECT ticker,date FROM timeseriesdaily " \
                 "WHERE anomaly is NULL " \
                 "AND (closePChange>=10 OR closePChange<=-10)"  # I chose 10 and -10 as only ~0.6% of data was in these outer bounds, and it seemed to me that those in these bounds were more likely errors than correct
-        args = self.select(query, '')
+        if not (ticker is None):
+            query += " AND ticker = %s"
+            args = self.select(query, ticker)
+        else:
+            args = self.select(query, ticker)
         if len(args) != 0:
             query = "UPDATE timeseriesdaily SET anomaly=1 AND closePChange=NULL WHERE ticker=%s AND date=%s"
-            self.insert(query, args)
+            if len(args) == 1:
+                self.insert(query, args)
+            else:
+                self.insert(query, args, True)
+            print("%s anomalies marked." % len(args))
