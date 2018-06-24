@@ -31,11 +31,11 @@ class DBManager:
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
 
-    def insert(self, query, args, many=False):
+    def insert(self, query, args):
         try:
             conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
-            if many:
+            if len(args) > 1:
                 # If this fails you may need to increase the size of max_allowed_packet in the my.ini file for the
                 # server
                 if len(args) > 100000:
@@ -109,7 +109,8 @@ class DBManager:
         query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
         self.updateClosePChange()
-        self.insert(query, args, True)
+        self.markAsErrenous()
+        self.insert(query, args)
 
     def addManyNewStocks(self, tickersNSectors):
         completed = 0
@@ -127,14 +128,12 @@ class DBManager:
             completed += 1
         query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        self.insert(query, tickersArgs, True)
+        self.insert(query, tickersArgs)
         query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
-        self.insert(query, timeseriesArgs, True)
-        start = datetime.datetime.today()
+        self.insert(query, timeseriesArgs)
         self.updateClosePChange()
-        finish = datetime.datetime.today()
-        print('Took %s seconds to update change' % (finish-start).seconds)
+        self.markAsErrenous()
         print('All stocks added')
 
     def updateAllStocks(self):
@@ -159,10 +158,11 @@ class DBManager:
             completed += 1
         query = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume) " \
                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s)"
-        self.insert(query, insertArgs, True)
+        self.insert(query, insertArgs)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
-        self.insert(query, updateArgs, True)
+        self.insert(query, updateArgs)
         self.updateClosePChange()
+        self.markAsErrenous()
         print('All stocks updated')
 
     def updateClosePChange(self):
@@ -183,4 +183,15 @@ class DBManager:
             closePCHange = ((closeAfter - closeBefore) / closeBefore) * 100
             args.append((closePCHange, ticker, date))
         query = "UPDATE timeseriesdaily SET closePChange = %s WHERE ticker = %s AND date = %s"
-        self.insert(query, args, True)
+        self.insert(query, args)
+
+    # There are anomalies in some of the date, so where we find these we mark anomaly as true so that they can be
+    # ignored
+    def markAsAnomaly(self):
+        query = "SELECT ticker,date FROM timeseriesdaily " \
+                "WHERE anomaly is NULL " \
+                "AND (closePChange>=10 OR closePChange<=-10)"  # I chose 10 and -10 as only ~0.6% of data was in these outer bounds, and it seemed to me that those in these bounds were more likely errors than correct
+        args = self.select(query, '')
+        if len(args) != 0:
+            query = "UPDATE timeseriesdaily SET anomaly=1 AND closePChange=NULL WHERE ticker=%s AND date=%s"
+            self.insert(query, args)
