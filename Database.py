@@ -20,6 +20,25 @@ def getSP500Tickers():
     return tickersNSectors
 
 
+def getStockSplits(ticker):
+    resp = requests.get("https://www.stocksplithistory.com/?symbol=%s" % ticker)
+    soup = bs.BeautifulSoup(resp.text, 'lxml')
+    splitsElems = soup.find_all('td', {'style': 'padding: 4px; border-bottom: 1px solid #CCCCCC'})
+    count = 0
+    splits = []
+    for splitElem in splitsElems:
+        if count % 2 == 0:
+            dateStr = splitElem.text.split('/')
+            date = datetime.date(int(dateStr[2]), int(dateStr[0]), int(dateStr[1]))
+        else:
+            ratioStr = splitElem.text.split(' for ')
+            frm = int(ratioStr[0])
+            to = int(ratioStr[1])
+            splits.append((ticker, date, frm, to))
+        count += 1
+    return splits
+
+
 def pointToDate(point):
     dateComps = str(point).split('-')
     date = datetime.date(int(dateComps[0]), int(dateComps[1]), int(dateComps[2]))
