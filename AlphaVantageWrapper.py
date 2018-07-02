@@ -10,12 +10,13 @@ class AlphaVantage:
     def requestDailyHistory(self, outputSize, ticker):
         if outputSize == OutputSize.FULL:
             response = requests.get(
-                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={0}&outputsize=full&apikey={1}".format(
+                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&outputsize=full&apikey={1}".format(
                     ticker, self.apiKey))
         else:
             response = requests.get(
-                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={0}&apikey={1}".format(ticker,
-                                                                                                            self.apiKey))
+                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&apikey={1}".format(
+                    ticker,
+                    self.apiKey))
         history = response.json().get('Time Series (Daily)')
         return history
 
