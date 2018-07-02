@@ -20,25 +20,6 @@ def getSP500Tickers():
     return tickersNSectors
 
 
-def getStockSplits(ticker):
-    resp = requests.get("https://www.stocksplithistory.com/?symbol=%s" % ticker)
-    soup = bs.BeautifulSoup(resp.text, 'lxml')
-    splitsElems = soup.find_all('td', {'style': 'padding: 4px; border-bottom: 1px solid #CCCCCC'})
-    count = 0
-    splits = []
-    for splitElem in splitsElems:
-        if count % 2 == 0:
-            dateStr = splitElem.text.split('/')
-            date = datetime.date(int(dateStr[2]), int(dateStr[0]), int(dateStr[1]))
-        else:
-            ratioStr = splitElem.text.split(' for ')
-            frm = int(ratioStr[0])
-            to = int(ratioStr[1])
-            splits.append((ticker, date, frm, to))
-        count += 1
-    return splits
-
-
 def pointToDate(point):
     dateComps = str(point).split('-')
     date = datetime.date(int(dateComps[0]), int(dateComps[1]), int(dateComps[2]))
@@ -49,8 +30,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,volume,closePChange) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,prevDate,open,high,low,close,adjClose,volume,adjClosePChange) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -103,26 +84,27 @@ class DBManager:
             pointInHistory = history.get(point)
             date = pointToDate(point)
             # We do not add records to the database that are recorded as today, as the values vary over the day
-            if (date - lastUpdated).days > 0 and (date - datetime.date.today()).days != 0:
+            if (date - lastUpdated).days >= 0 and (date - datetime.date.today()).days != 0:
                 open = float(pointInHistory.get('1. open'))
                 high = float(pointInHistory.get('2. high'))
                 low = float(pointInHistory.get('3. low'))
                 close = float(pointInHistory.get('4. close'))
-                volume = int(pointInHistory.get('5. volume'))
+                adjClose = float(pointInHistory.get('5. adjusted close'))
+                volume = int(pointInHistory.get('6. volume'))
                 if positionOfPrev == len(points):
                     if addingNewStock:
                         prevDate = datetime.date.min
-                        closePCHange = 0
+                        adjClosePChange = 0
                     else:
-                        result = self.select("SELECT MAX(date),close FROM timeseriesdaily WHERE ticker = %s", (ticker,))
+                        result = self.select("SELECT MAX(date),adjClose FROM timeseriesdaily WHERE ticker = %s", (ticker,))
                         prevDate = result[0][0]
-                        closeBefore = result[0][1]
-                        closePCHange = ((close - closeBefore) / closeBefore) * 100
+                        adjCloseBefore = result[0][1]
+                        adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
                 else:
                     prevDate = pointToDate(points[positionOfPrev])
-                    closeBefore = float(history.get(points[positionOfPrev]).get('4. close'))
-                    closePCHange = ((close - closeBefore) / closeBefore) * 100
-                args.append((ticker, date, prevDate, open, high, low, close, volume, closePCHange))
+                    adjCloseBefore = float(history.get(points[positionOfPrev]).get('5. adjusted close'))
+                    adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
+                args.append((ticker, date, prevDate, open, high, low, close, adjClose, volume, adjClosePChange))
             positionOfPrev += 1
 
     def addNewStock(self, ticker, sector):
@@ -161,6 +143,11 @@ class DBManager:
         self.markAsAnomaly()
         print('All stocks added')
 
+    def readdAllStocks(self):
+        tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
+        self.insert("DELETE FROM tickers", ())
+        self.addManyNewStocks(tickersNSectors)
+
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
         insertArgs = []
@@ -192,14 +179,14 @@ class DBManager:
     def markAsAnomaly(self, ticker=None):
         query = "SELECT ticker,date FROM timeseriesdaily " \
                 "WHERE anomaly is NULL " \
-                "AND (closePChange>=10 OR closePChange<=-10)"  # I chose 10 and -10 as only ~0.6% of data was in these outer bounds, and it seemed to me that those in these bounds were more likely errors than correct
+                "AND (adjClosePChange>=10 OR adjClosePChange<=-10)"  # I chose 10 and -10 as only ~0.6% of data was in these outer bounds, and it seemed to me that those in these bounds were more likely errors than correct
         if not (ticker is None):
             query += " AND ticker = %s"
             args = self.select(query, ticker)
         else:
             args = self.select(query, ticker)
         if len(args) != 0:
-            query = "UPDATE timeseriesdaily SET anomaly=1 AND closePChange=NULL WHERE ticker=%s AND date=%s"
+            query = "UPDATE timeseriesdaily SET anomaly=1 AND adjClosePChange=NULL WHERE ticker=%s AND date=%s"
             if len(args) == 1:
                 self.insert(query, args)
             else:
