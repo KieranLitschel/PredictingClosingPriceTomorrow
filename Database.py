@@ -5,6 +5,8 @@ from mysql.connector import MySQLConnection, Error
 import AlphaVantageWrapper as AVW
 import datetime
 import time
+import random
+import math
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -57,6 +59,7 @@ class DBManager:
                         print('Inserting %s to %s' % (i - 100000, i))
                         cursor.executemany(query, args[i - 100000: i])
                         batchNo += 1
+                        conn.commit()
                     if i < len(args) - 1:
                         print('Inserting %s to %s' % (i, len(args)))
                         cursor.executemany(query, args[i: len(args)])
@@ -83,6 +86,107 @@ class DBManager:
             cursor.close()
             conn.close()
 
+    def formClassBands(self, noOfClasses):
+        adjClosePChanges = self.select("SELECT adjClosePChange FROM timeseriesdaily ORDER BY adjClosePChange ASC", ())
+        bandSize = math.floor(len(adjClosePChanges) / noOfClasses)
+        bands = []
+        for i in range(1, noOfClasses):
+            bands.append(adjClosePChanges[i * bandSize])
+        return bands
+
+    # There was no way around formatting the string to add the field name to the sql query, so I made this method to
+    # ensure the injected field name is not malicious
+    def getSafeName(self, noOfClasses, trainingPc, testPc, validationPc):
+        if validationPc != 0:
+            return "`%s_%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc), int(validationPc))
+        else:
+            return "`%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc))
+
+    def updateSetMembers(self, classBands, trainingPc, testPc, validationPc=0):
+        noOfClasses = len(classBands) + 1
+        name = self.getSafeName(noOfClasses, trainingPc, validationPc, testPc)
+        column_names = self.select(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='stocks' AND TABLE_NAME='mlsets'",
+            ())
+        for i in range(0, len(column_names)):
+            column_names[i] = column_names[i][0]
+        if name[1:-1] not in column_names:
+            self.insert(
+                "ALTER TABLE mlsets ADD %s INT NULL;" % self.getSafeName(noOfClasses, trainingPc, testPc, validationPc),
+                ())
+        bandNo = 0
+        bandData = []
+        shortest = float('inf')
+        print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
+        bandData.append(self.select(
+            "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
+            "INNER JOIN mlsets AS m "
+            "WHERE t.adjClosePChange < %s "
+            "AND t.ticker = m.ticker "
+            "AND t.date = m.date "
+            "AND m.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            (classBands[0],)))
+        if len(bandData[bandNo]) < shortest:
+            shortest = len(bandData[bandNo])
+        bandNo += 1
+        print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
+        while bandNo < len(classBands):
+            bandData.append(
+                self.select(
+                    "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
+                    "INNER JOIN mlsets AS m "
+                    "WHERE t.adjClosePChange >= %s "
+                    "AND t.adjClosePChange < %s "
+                    "AND t.ticker = m.ticker "
+                    "AND t.date = m.date "
+                    "AND m.{0} IS NULL".format(name),
+                    (classBands[bandNo - 1], classBands[bandNo])))
+            if len(bandData[bandNo]) < shortest:
+                shortest = len(bandData[bandNo])
+            bandNo += 1
+            print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
+        bandData.append(self.select(
+            "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
+            "INNER JOIN mlsets AS m "
+            "WHERE t.adjClosePChange >= %s "
+            "AND t.ticker = m.ticker "
+            "AND t.date = m.date "
+            "AND m.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            (classBands[-1],)))
+        if len(bandData[bandNo]) < shortest:
+            shortest = len(bandData[bandNo])
+        bandNo += 1
+        print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
+        args = []
+        classNo = 0
+        print('Determining classes...')
+        argsDict = {}
+        for band in bandData:
+            random.shuffle(band)
+            hdt = 0
+            argsDict[classNo] = []
+            argsDict[classNo + noOfClasses] = []
+            while shortest - hdt >= 99:
+                for pc in range(0, 100):
+                    if pc < trainingPc:
+                        args.append((classNo, band[hdt + pc][0], band[hdt + pc][1]))
+                        argsDict[classNo].append((classNo, band[hdt + pc][0], band[hdt + pc][1]))
+                    elif pc < trainingPc + testPc:
+                        args.append((classNo + noOfClasses, band[hdt + pc][0], band[hdt + pc][1]))
+                        argsDict[classNo + noOfClasses].append((classNo, band[hdt + pc][0], band[hdt + pc][1]))
+                    else:
+                        args.append((classNo + (2 * noOfClasses), band[hdt + pc][0], band[hdt + pc][1]))
+                hdt += 100
+            classNo += 1
+        print('Determined classes.')
+        query = "UPDATE mlsets SET {0}=%s WHERE ticker=%s AND date=%s".format(
+            self.getSafeName(noOfClasses, trainingPc, validationPc, testPc))
+        if len(args) == 1:
+            self.insert(query, args[0])
+        elif len(args) > 1:
+            self.insert(query, args, True)
+        print('Classes updated for field %s in table mlsets' % name)
+
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
 
         maxSMA = 13
@@ -95,9 +199,8 @@ class DBManager:
             query = "SELECT adjClose FROM timeseriesdaily " \
                     "WHERE ticker=%s " \
                     "AND date<=DATE(%s) " \
-                    "ORDER BY date DESC LIMIT {0}".format(
-                str(maxSMA - 1))  # This is not vulnerable to injection as maxSMA is treated as a number
-            closes = self.select(query, (ticker, lastUpdated))
+                    "ORDER BY date DESC LIMIT %s"
+            closes = self.select(query, (ticker, lastUpdated, maxSMA))
             for close in reversed(closes):
                 closeHist.append(close[0])
         first = True
@@ -116,8 +219,9 @@ class DBManager:
                     if addingNewStock:
                         adjClosePChange = None
                     else:
-                        result = self.select("SELECT adjClose FROM timeseriesdaily WHERE ticker = %s  ORDER BY date DESC LIMIT 1",
-                                             (ticker,))
+                        result = self.select(
+                            "SELECT adjClose FROM timeseriesdaily WHERE ticker = %s  ORDER BY date DESC LIMIT 1",
+                            (ticker,))
                         adjCloseBefore = result[0][0]
                         adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
                     first = False
