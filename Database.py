@@ -7,6 +7,7 @@ import datetime
 import time
 import random
 import math
+import numpy as np
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -104,7 +105,7 @@ class DBManager:
 
     def updateSetMembers(self, classBands, trainingPc, testPc, validationPc=0):
         noOfClasses = len(classBands) + 1
-        name = self.getSafeName(noOfClasses, trainingPc, validationPc, testPc)
+        name = self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)
         column_names = self.select(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='stocks' AND TABLE_NAME='mlsets'",
             ())
@@ -180,12 +181,31 @@ class DBManager:
             classNo += 1
         print('Determined classes.')
         query = "UPDATE mlsets SET {0}=%s WHERE ticker=%s AND date=%s".format(
-            self.getSafeName(noOfClasses, trainingPc, validationPc, testPc))
+            self.getSafeName(noOfClasses, trainingPc, testPc, validationPc))
         if len(args) == 1:
             self.insert(query, args[0])
         elif len(args) > 1:
             self.insert(query, args, True)
         print('Classes updated for field %s in table mlsets' % name)
+
+    def getSetsFromField(self, setFieldName, reqFields):
+        setInfo = setFieldName.split('_')
+        noOfClasses = int(setInfo[0])
+        query = "SELECT "
+        for i in range(0, len(reqFields) - 1):
+            query += reqFields[i] + ", "
+        query += reqFields[-1] + " FROM timeseriesdaily AS t INNER JOIN mlsets AS m " \
+                                  "WHERE t.ticker = m.ticker " \
+                                  "AND t.date = m.date " \
+                                  "AND m.`{0}` >= %s " \
+                                  "AND m.`{0}` <= %s".format(setFieldName)
+        trainingSet = np.array(self.select(query, (0, noOfClasses - 1)))
+        testSet = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
+        if len(setInfo) == 3:
+            return trainingSet, testSet
+        if len(setInfo) == 4:
+            validationSet = np.array(self.select(query, (2 * noOfClasses, 3 * noOfClasses - 1)))
+            return trainingSet, testSet, validationSet
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
 
