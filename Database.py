@@ -8,6 +8,7 @@ import time
 import random
 import math
 import numpy as np
+from numpy import nonzero
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -188,24 +189,32 @@ class DBManager:
             self.insert(query, args, True)
         print('Classes updated for field %s in table mlsets' % name)
 
-    def getSetsFromField(self, setFieldName, reqFields):
+    def getSetsFromField(self, setFieldName, reqFields, reqNotNulls = []):
         setInfo = setFieldName.split('_')
         noOfClasses = int(setInfo[0])
-        query = "SELECT "
-        for i in range(0, len(reqFields) - 1):
-            query += reqFields[i] + ", "
-        query += reqFields[-1] + " FROM timeseriesdaily AS t INNER JOIN mlsets AS m " \
-                                  "WHERE t.ticker = m.ticker " \
-                                  "AND t.date = m.date " \
-                                  "AND m.`{0}` >= %s " \
-                                  "AND m.`{0}` <= %s".format(setFieldName)
-        trainingSet = np.array(self.select(query, (0, noOfClasses - 1)))
-        testSet = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
+        query = "SELECT m.`%s`" % setFieldName
+        for reqField in reqFields:
+            query += ", " + reqField
+        query += " FROM timeseriesdaily AS t INNER JOIN mlsets AS m " \
+                 "WHERE t.ticker = m.ticker " \
+                 "AND t.date = m.date " \
+                 "AND m.`{0}` >= %s " \
+                 "AND m.`{0}` <= %s ".format(setFieldName)
+        for reqNotNull in reqNotNulls:
+            query += "AND "+reqNotNull+" IS NOT NULL"
+        trainX = np.array(self.select(query, (0, noOfClasses - 1)))
+        trainY = trainX[:, 0].reshape(-1, 1)
+        trainX = np.delete(trainX, 0, 1)
+        testX = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
+        testY = testX[:, 0].reshape(-1, 1)
+        testX = np.delete(testX, 0, 1)
         if len(setInfo) == 3:
-            return trainingSet, testSet
+            return trainX, trainY, testX, testY
         if len(setInfo) == 4:
-            validationSet = np.array(self.select(query, (2 * noOfClasses, 3 * noOfClasses - 1)))
-            return trainingSet, testSet, validationSet
+            validX = np.array(self.select(query, (2 * noOfClasses, 3 * noOfClasses - 1)))
+            validY = validX[:, 0].reshape(-1, 1)
+            validX = np.delete(validX, 0, 1)
+            return trainX, trainY, testX, testY, validX, validY
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
 
