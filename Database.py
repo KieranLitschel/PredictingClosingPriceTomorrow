@@ -8,7 +8,7 @@ import time
 import random
 import math
 import numpy as np
-from numpy import nonzero
+import pickle
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -39,12 +39,27 @@ def smaPDiff(series, period):
         return None
 
 
+def addFieldsToInsertQuery(query, fields):
+    query = query.split(' ')
+    query[2] = query[2][0:-1]
+    query[3] = query[3][0:-1]
+    for field in fields:
+        query[2] += "," + field
+        query[3] += ",%s"
+    query[2] += ")"
+    query[3] += ")"
+    finalQuery = query[0]
+    for i in range(1,len(query)):
+        finalQuery += " " + query[i]
+    return finalQuery
+
+
 class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA) " \
-                                 "VALUES(%s,DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -108,25 +123,26 @@ class DBManager:
         noOfClasses = len(classBands) + 1
         name = self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)
         column_names = self.select(
-            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='stocks' AND TABLE_NAME='mlsets'",
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='stocks' AND TABLE_NAME='timeseriesdaily'",
             ())
         for i in range(0, len(column_names)):
             column_names[i] = column_names[i][0]
         if name[1:-1] not in column_names:
             self.insert(
-                "ALTER TABLE mlsets ADD %s INT NULL;" % self.getSafeName(noOfClasses, trainingPc, testPc, validationPc),
+                "ALTER TABLE timeseriesdaily ADD %s INT NULL;" % self.getSafeName(noOfClasses, trainingPc, testPc,
+                                                                                  validationPc),
                 ())
         bandNo = 0
         bandData = []
         shortest = float('inf')
         print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         bandData.append(self.select(
-            "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
-            "INNER JOIN mlsets AS m "
-            "WHERE t.adjClosePChange < %s "
-            "AND t.ticker = m.ticker "
-            "AND t.date = m.date "
-            "AND m.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            "SELECT t1.ticker,t1.date FROM timeseriesdaily AS t1 "
+            "INNER JOIN timeseriesdaily AS t2 "
+            "WHERE t2.adjClosePChange < %s "
+            "AND t1.ticker = t2.ticker "
+            "AND t1.dateTmrw = t2.date "
+            "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[0],)))
         if len(bandData[bandNo]) < shortest:
             shortest = len(bandData[bandNo])
@@ -135,25 +151,25 @@ class DBManager:
         while bandNo < len(classBands):
             bandData.append(
                 self.select(
-                    "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
-                    "INNER JOIN mlsets AS m "
-                    "WHERE t.adjClosePChange >= %s "
-                    "AND t.adjClosePChange < %s "
-                    "AND t.ticker = m.ticker "
-                    "AND t.date = m.date "
-                    "AND m.{0} IS NULL".format(name),
+                    "SELECT t1.ticker,t1.date FROM timeseriesdaily AS t1 "
+                    "INNER JOIN timeseriesdaily AS t2 "
+                    "WHERE t2.adjClosePChange >= %s "
+                    "AND t2.adjClosePChange < %s "
+                    "AND t1.ticker = t2.ticker "
+                    "AND t1.dateTmrw = t2.date "
+                    "AND t1.{0} IS NULL".format(name),
                     (classBands[bandNo - 1], classBands[bandNo])))
             if len(bandData[bandNo]) < shortest:
                 shortest = len(bandData[bandNo])
             bandNo += 1
             print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         bandData.append(self.select(
-            "SELECT t.ticker,t.date FROM timeseriesdaily AS t "
-            "INNER JOIN mlsets AS m "
-            "WHERE t.adjClosePChange >= %s "
-            "AND t.ticker = m.ticker "
-            "AND t.date = m.date "
-            "AND m.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            "SELECT t1.ticker,t1.date FROM timeseriesdaily AS t1 "
+            "INNER JOIN timeseriesdaily AS t2 "
+            "WHERE t2.adjClosePChange >= %s "
+            "AND t1.ticker = t2.ticker "
+            "AND t1.dateTmrw = t2.date "
+            "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[-1],)))
         if len(bandData[bandNo]) < shortest:
             shortest = len(bandData[bandNo])
@@ -181,27 +197,25 @@ class DBManager:
                 hdt += 100
             classNo += 1
         print('Determined classes.')
-        query = "UPDATE mlsets SET {0}=%s WHERE ticker=%s AND date=%s".format(
+        query = "UPDATE timeseriesdaily SET {0}=%s WHERE ticker=%s AND date=%s".format(
             self.getSafeName(noOfClasses, trainingPc, testPc, validationPc))
         if len(args) == 1:
             self.insert(query, args[0])
         elif len(args) > 1:
-            self.insert(query, args, True)
-        print('Classes updated for field %s in table mlsets' % name)
+            self.insert(query, args, many=True)
+        print('Classes updated for field %s in table timeseriesdaily' % name)
 
-    def getSetsFromField(self, setFieldName, reqFields, reqNotNulls = []):
+    def getSetsFromField(self, setFieldName, reqFields, reqNotNulls=[]):
         setInfo = setFieldName.split('_')
         noOfClasses = int(setInfo[0])
-        query = "SELECT m.`%s`" % setFieldName
+        query = "SELECT `%s`" % setFieldName
         for reqField in reqFields:
             query += ", " + reqField
-        query += " FROM timeseriesdaily AS t INNER JOIN mlsets AS m " \
-                 "WHERE t.ticker = m.ticker " \
-                 "AND t.date = m.date " \
-                 "AND m.`{0}` >= %s " \
-                 "AND m.`{0}` <= %s ".format(setFieldName)
+        query += " FROM timeseriesdaily " \
+                 "WHERE `{0}` >= %s " \
+                 "AND `{0}` <= %s ".format(setFieldName)
         for reqNotNull in reqNotNulls:
-            query += "AND "+reqNotNull+" IS NOT NULL"
+            query += "AND " + reqNotNull + " IS NOT NULL"
         trainX = np.array(self.select(query, (0, noOfClasses - 1)))
         trainY = trainX[:, 0].reshape(-1, 1)
         trainX = np.delete(trainX, 0, 1)
@@ -216,8 +230,8 @@ class DBManager:
             validX = np.delete(validX, 0, 1)
             return trainX, trainY, testX, testY, validX, validY
 
-    def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min):
-
+    def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
+                         columnNames=[]):
         maxSMA = 13
         if lastUpdated == datetime.date.min:
             addingNewStock = True
@@ -233,9 +247,16 @@ class DBManager:
             for close in reversed(closes):
                 closeHist.append(close[0])
         first = True
-        for point in reversed(points):
+        noOfPoints = len(points)
+        points = list(reversed(points))
+        for i in range(0, noOfPoints):
+            point = points[i]
             pointInHistory = history.get(point)
             date = pointToDate(point)
+            if i < noOfPoints - 1:
+                dateTmrw = pointToDate(points[i + 1])
+            else:
+                dateTmrw = None
             # We do not add records to the database that are recorded as today, as the values vary over the day
             if (date - lastUpdated).days >= 0 and (date - datetime.date.today()).days != 0:
                 open = float(pointInHistory.get('1. open'))
@@ -260,8 +281,16 @@ class DBManager:
                 pDiffClose5SMA = smaPDiff(closeHist, 5)
                 pDiffClose8SMA = smaPDiff(closeHist, 8)
                 pDiffClose13SMA = smaPDiff(closeHist, 13)
-                args.append((ticker, date, open, high, low, close, adjClose, volume, adjClosePChange,
-                             pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA))
+                arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
+                       pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA]
+                if fieldsToRestore is not None:
+                    for column in columnNames:
+                        value = None
+                        if fieldsToRestore[ticker] is not None:
+                            if fieldsToRestore[ticker][date] is not None:
+                                value = fieldsToRestore[ticker][date].get(column)
+                        arg.append(value)
+                args.append(tuple(arg))
                 adjCloseBefore = adjClose
 
     def addNewStock(self, ticker, sector):
@@ -275,10 +304,10 @@ class DBManager:
         self.insert(query, args)
         args = []
         self.timeseriesToArgs(ticker, points, history, args)
-        self.insert(self.insertAllTSDQuery, args, True)
+        self.insert(self.insertAllTSDQuery, args, many=True)
         print('Stock added successfully')
 
-    def addManyNewStocks(self, tickersNSectors):
+    def addManyNewStocks(self, tickersNSectors, fieldsToRestore=None, columnNames=[]):
         completed = 0
         tickersArgs = []
         timeseriesArgs = []
@@ -289,19 +318,40 @@ class DBManager:
             points = list(history.keys())
             firstDay = pointToDate(points[-1])
             tickersArgs.append((ticker, sector, firstDay, lastUpdated))
-            self.timeseriesToArgs(ticker, points, history, timeseriesArgs)
+            self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
+                                  columnNames=columnNames)
             time.sleep(1)  # Can only make ~1 request to the API per second
             completed += 1
         query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        self.insert(query, tickersArgs, True)
-        self.insert(self.insertAllTSDQuery, timeseriesArgs, True)
+        self.insert(query, tickersArgs, many=True)
+        query = self.insertAllTSDQuery
+        if fieldsToRestore is not None:
+            query = addFieldsToInsertQuery(query, columnNames)
+        self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
-    def readdAllStocks(self):
+    def readdAllStocks(self, columnsToSave=[]):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
+        with open('tickersNSectors.pickle', 'wb') as handle:
+            pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        query = "SELECT ticker, date"
+        for column in columnsToSave:
+            query += ", " + column
+        query += " FROM timeseriesdaily"
+        result = self.select(query, ())
+        fieldsToRestore = {}
+        for row in result:
+            if row[0] not in fieldsToRestore.keys():
+                fieldsToRestore[row[0]] = {}
+            if row[1] not in fieldsToRestore[row[0]].keys():
+                fieldsToRestore[row[0]][row[1]] = {}
+            for i in range(0, len(columnsToSave)):
+                fieldsToRestore[row[0]][row[1]][columnsToSave[i]] = row[i + 2]
+        with open('fieldsToRestore.pickle', 'wb') as handle:
+            pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         self.insert("DELETE FROM tickers", ())
-        self.addManyNewStocks(tickersNSectors)
+        self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
@@ -328,13 +378,13 @@ class DBManager:
                 time.sleep(1)  # Can only make ~1 request to the API per second
             completed += 1
         if len(insertArgs) > 1:
-            self.insert(self.insertAllTSDQuery, insertArgs, True)
+            self.insert(self.insertAllTSDQuery, insertArgs, many=True)
         else:
             insertArgs = insertArgs[0]
             self.insert(self.insertAllTSDQuery, insertArgs)
         query = "UPDATE tickers SET lastUpdated = DATE(%s) WHERE ticker = %s;"
         if len(updateArgs) > 1:
-            self.insert(query, updateArgs, True)
+            self.insert(query, updateArgs, many=True)
         else:
             updateArgs = updateArgs[0]
             self.insert(query, updateArgs)
