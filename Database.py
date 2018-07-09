@@ -49,7 +49,7 @@ def addFieldsToInsertQuery(query, fields):
     query[2] += ")"
     query[3] += ")"
     finalQuery = query[0]
-    for i in range(1,len(query)):
+    for i in range(1, len(query)):
         finalQuery += " " + query[i]
     return finalQuery
 
@@ -63,7 +63,7 @@ class DBManager:
 
     def insert(self, query, args, many=False):
         try:
-            conn = mysql.connector.connect(host='localhost', database='stocks', user='root', password=self.pwrd)
+            conn = mysql.connector.connect(host='127.0.0.1', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
             if many:
                 # If this fails you may need to increase the size of max_allowed_packet in the my.ini file for the
@@ -76,7 +76,6 @@ class DBManager:
                         print('Inserting %s to %s' % (i - 100000, i))
                         cursor.executemany(query, args[i - 100000: i])
                         batchNo += 1
-                        conn.commit()
                     if i < len(args) - 1:
                         print('Inserting %s to %s' % (i, len(args)))
                         cursor.executemany(query, args[i: len(args)])
@@ -205,7 +204,7 @@ class DBManager:
             self.insert(query, args, many=True)
         print('Classes updated for field %s in table timeseriesdaily' % name)
 
-    def getSetsFromField(self, setFieldName, reqFields, reqNotNulls=[]):
+    def getLearningData(self, setFieldName, reqFields, reqNotNulls=[]):
         setInfo = setFieldName.split('_')
         noOfClasses = int(setInfo[0])
         query = "SELECT `%s`" % setFieldName
@@ -215,19 +214,27 @@ class DBManager:
                  "WHERE `{0}` >= %s " \
                  "AND `{0}` <= %s ".format(setFieldName)
         for reqNotNull in reqNotNulls:
-            query += "AND " + reqNotNull + " IS NOT NULL"
+            query += "AND " + reqNotNull + " IS NOT NULL "
+        print('Getting training data...')
         trainX = np.array(self.select(query, (0, noOfClasses - 1)))
-        trainY = trainX[:, 0].reshape(-1, 1)
+        trainY = trainX[:, 0]
         trainX = np.delete(trainX, 0, 1)
+        mean = np.mean(trainX, axis=0)
+        std = np.std(trainX, axis=0)
+        trainX = (trainX-mean)/std
+        print('Getting testing data...')
         testX = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
-        testY = testX[:, 0].reshape(-1, 1)
+        testY = testX[:, 0] - noOfClasses
         testX = np.delete(testX, 0, 1)
+        testX = (testX-mean)/std
         if len(setInfo) == 3:
             return trainX, trainY, testX, testY
         if len(setInfo) == 4:
+            print('Getting validation data...')
             validX = np.array(self.select(query, (2 * noOfClasses, 3 * noOfClasses - 1)))
-            validY = validX[:, 0].reshape(-1, 1)
+            validY = validX[:, 0] - 2 * noOfClasses
             validX = np.delete(validX, 0, 1)
+            validX = (validX-mean)/std
             return trainX, trainY, testX, testY, validX, validY
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
@@ -254,7 +261,7 @@ class DBManager:
             pointInHistory = history.get(point)
             date = pointToDate(point)
             if i < noOfPoints - 1:
-                dateTmrw = pointToDate(points[i + 1])
+                dateTmrw = pointToDate(points[i + 1])  # If updating need to update row with null dateTrmw as first date
             else:
                 dateTmrw = None
             # We do not add records to the database that are recorded as today, as the values vary over the day
