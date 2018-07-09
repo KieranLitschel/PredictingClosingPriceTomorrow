@@ -6,7 +6,7 @@ I have decided to try KNN as it is very simple to train, this will also give me 
 ### Results of using features: adjClosePChange, pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA
 Note that:
 * adjClosePChange is the percentage change between the adjusted closing price the day before we are predicting and the day before it.
-* pDiffCloseNSMA, where N is a number, is the percentage difference between the closing price the day before we are predicting, and the N day simple moving average, I chose to use 5, 8, and 13 as they are fibonaci numbers which are commonly compared against each other when assessing a stock.
+* pDiffCloseNSMA, where N is a number, is the percentage difference between the closing price the day before we are predicting, and the N day simple moving average, tracing back N days from the day before the day we are predicting. I chose to use 5, 8, and 13 as they are fibonaci numbers which are commonly compared against each other when assessing a stock.
 
 <img src="https://github.com/KieranLitschel/Images/blob/master/KNN%20with%204%20features.png" alt="KNN with 4 features, plateus at approx 31% accuracy" style="width: 10px;"/>
 
