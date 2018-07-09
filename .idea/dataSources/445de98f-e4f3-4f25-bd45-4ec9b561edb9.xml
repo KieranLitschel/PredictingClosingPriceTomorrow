@@ -16,7 +16,7 @@
     <schema id="5" parent="1" name="stocks">
       <Current>1</Current>
       <Visible>1</Visible>
-      <Collation>utf8_general_ci</Collation>
+      <Collation>utf8mb4_0900_ai_ci</Collation>
     </schema>
     <schema id="6" parent="1" name="sys">
       <Collation>utf8mb4_0900_ai_ci</Collation>
@@ -1116,6 +1116,7 @@
     <column id="280" parent="277" name="sector">
       <Position>2</Position>
       <DataType>varchar(30)|0</DataType>
+      <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
     <column id="281" parent="277" name="firstDay">
@@ -1128,68 +1129,91 @@
       <DataType>date|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <index id="283" parent="277" name="symbol_UNIQUE">
-      <ColNames>ticker</ColNames>
-      <Unique>1</Unique>
-    </index>
-    <key id="284" parent="277" name="PRIMARY">
+    <key id="283" parent="277" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
-      <ColNames>ticker</ColNames>
+      <ColNames>ticker
+sector</ColNames>
       <Primary>1</Primary>
     </key>
-    <key id="285" parent="277" name="symbol_UNIQUE">
-      <ColNames>ticker</ColNames>
-      <UnderlyingIndexName>symbol_UNIQUE</UnderlyingIndexName>
-    </key>
-    <column id="286" parent="278" name="ticker">
+    <column id="284" parent="278" name="ticker">
       <Position>1</Position>
       <DataType>varchar(5)|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="287" parent="278" name="date">
+    <column id="285" parent="278" name="date">
       <Position>2</Position>
       <DataType>date|0</DataType>
       <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="288" parent="278" name="open">
+    <column id="286" parent="278" name="dateTmrw">
       <Position>3</Position>
-      <DataType>float|0</DataType>
-      <NotNull>1</NotNull>
+      <DataType>date|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="289" parent="278" name="high">
+    <column id="287" parent="278" name="open">
       <Position>4</Position>
       <DataType>float|0</DataType>
-      <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="290" parent="278" name="low">
+    <column id="288" parent="278" name="high">
       <Position>5</Position>
       <DataType>float|0</DataType>
-      <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <column id="291" parent="278" name="close">
+    <column id="289" parent="278" name="low">
       <Position>6</Position>
       <DataType>float|0</DataType>
-      <NotNull>1</NotNull>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="290" parent="278" name="close">
+      <Position>7</Position>
+      <DataType>float|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="291" parent="278" name="adjClose">
+      <Position>8</Position>
+      <DataType>float|0</DataType>
       <ColumnKind>normal</ColumnKind>
     </column>
     <column id="292" parent="278" name="volume">
-      <Position>7</Position>
+      <Position>9</Position>
       <DataType>bigint(20)|0</DataType>
-      <NotNull>1</NotNull>
       <ColumnKind>normal</ColumnKind>
     </column>
-    <key id="293" parent="278" name="PRIMARY">
+    <column id="293" parent="278" name="adjClosePChange">
+      <Position>10</Position>
+      <DataType>float|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="294" parent="278" name="pDiffClose5SMA">
+      <Position>11</Position>
+      <DataType>float|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="295" parent="278" name="pDiffClose8SMA">
+      <Position>12</Position>
+      <DataType>float|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="296" parent="278" name="pDiffClose13SMA">
+      <Position>13</Position>
+      <DataType>float|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <column id="297" parent="278" name="4_80_20">
+      <Position>14</Position>
+      <DataType>int(11)|0</DataType>
+      <ColumnKind>normal</ColumnKind>
+    </column>
+    <key id="298" parent="278" name="PRIMARY">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>ticker
 date</ColNames>
       <Primary>1</Primary>
     </key>
-    <foreign-key id="294" parent="278" name="symbol">
+    <foreign-key id="299" parent="278" name="ticker">
       <ColNames>ticker</ColNames>
       <RefSchemaName>stocks</RefSchemaName>
       <RefTableName>tickers</RefTableName>
