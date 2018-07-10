@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -213,12 +213,12 @@ class DBManager:
         trainX = np.delete(trainX, 0, 1)
         mean = np.mean(trainX, axis=0)
         std = np.std(trainX, axis=0)
-        trainX = (trainX-mean)/std
+        trainX = (trainX - mean) / std
         print('Getting testing data...')
         testX = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
         testY = testX[:, 0] - noOfClasses
         testX = np.delete(testX, 0, 1)
-        testX = (testX-mean)/std
+        testX = (testX - mean) / std
         if len(setInfo) == 3:
             return trainX, trainY, testX, testY
         if len(setInfo) == 4:
@@ -226,7 +226,7 @@ class DBManager:
             validX = np.array(self.select(query, (2 * noOfClasses, 3 * noOfClasses - 1)))
             validY = validX[:, 0] - 2 * noOfClasses
             validX = np.delete(validX, 0, 1)
-            validX = (validX-mean)/std
+            validX = (validX - mean) / std
             return trainX, trainY, testX, testY, validX, validY
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
@@ -245,7 +245,9 @@ class DBManager:
             closes = self.select(query, (ticker, lastUpdated, maxPeriod))
             for close in reversed(closes):
                 closeHist.append(close[0])
-        fc = Finance.FinanceCalculator()
+            fc = Finance.FinanceCalculator(seriesSoFar=closeHist[0:14])
+        else:
+            fc = Finance.FinanceCalculator()
         first = True
         noOfPoints = len(points)
         points = list(reversed(points))
@@ -277,7 +279,7 @@ class DBManager:
                         adjCloseBefore = result[0][0]
                         adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
                         self.insert("UPDATE timeseriesdaily SET dateTmrw=%s WHERE ticker=%s AND dateTmrw IS NULL",
-                                        (date, ticker))
+                                    (date, ticker))
                     first = False
                 else:
                     adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
@@ -285,8 +287,9 @@ class DBManager:
                 pDiffClose5SMA = fc.smaPDiff(closeHist, 5)
                 pDiffClose8SMA = fc.smaPDiff(closeHist, 8)
                 pDiffClose13SMA = fc.smaPDiff(closeHist, 13)
+                rsi = fc.RSI(closeHist)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
-                       pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA]
+                       pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -297,7 +300,7 @@ class DBManager:
                 args.append(tuple(arg))
                 adjCloseBefore = adjClose
 
-    def addNewStock(self, ticker, sector):
+    def addNewStock(self, ticker, sector, fieldsToRestore=None, columnNames=[]):
         lastUpdated = datetime.date.today()
         history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
         points = list(history.keys())
@@ -307,7 +310,8 @@ class DBManager:
         args = (ticker, sector, firstDay, lastUpdated)
         self.insert(query, args)
         args = []
-        self.timeseriesToArgs(ticker, points, history, args)
+        self.timeseriesToArgs(ticker, points, history, args, fieldsToRestore=fieldsToRestore,
+                                  columnNames=columnNames)
         self.insert(self.insertAllTSDQuery, args, many=True)
         print('Stock added successfully')
 
@@ -335,7 +339,7 @@ class DBManager:
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
-    def readdAllStocks(self, columnsToSave=[]):
+    def readdAllStocks(self, columnsToSave=[], tickersNSectors=None):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
         with open('tickersNSectors.pickle', 'wb') as handle:
             pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -356,6 +360,26 @@ class DBManager:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         self.insert("DELETE FROM tickers", ())
         self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
+
+    def readdStock(self, ticker, columnsToSave=[]):
+        sector = self.select("SELECT sector FROM timeseriesdaily WHERE=%s", (ticker,))
+        query = "SELECT ticker, date"
+        for column in columnsToSave:
+            query += ", " + column
+        query += " FROM timeseriesdaily WHERE ticker=%s"
+        result = self.select(query, (ticker,))
+        fieldsToRestore = {}
+        for row in result:
+            if row[0] not in fieldsToRestore.keys():
+                fieldsToRestore[row[0]] = {}
+            if row[1] not in fieldsToRestore[row[0]].keys():
+                fieldsToRestore[row[0]][row[1]] = {}
+            for i in range(0, len(columnsToSave)):
+                fieldsToRestore[row[0]][row[1]][columnsToSave[i]] = row[i + 2]
+        with open('fieldsToRestore.pickle', 'wb') as handle:
+            pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
+        self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
