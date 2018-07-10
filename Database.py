@@ -9,6 +9,7 @@ import random
 import math
 import numpy as np
 import pickle
+import Finance
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -28,15 +29,6 @@ def pointToDate(point):
     dateComps = str(point).split('-')
     date = datetime.date(int(dateComps[0]), int(dateComps[1]), int(dateComps[2]))
     return date
-
-
-def smaPDiff(series, period):
-    if len(series) >= period:
-        sma = sum(series[len(series) - period: len(series)]) / period
-        close = series[-1]
-        return ((sma - close) / close) * 100
-    else:
-        return None
 
 
 def addFieldsToInsertQuery(query, fields):
@@ -239,20 +231,21 @@ class DBManager:
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
                          columnNames=[]):
-        maxSMA = 13
+        maxPeriod = 14
         if lastUpdated == datetime.date.min:
             addingNewStock = True
         else:
             addingNewStock = False
         closeHist = []
-        if not addingNewStock:  # Finish functionality in for loop
+        if not addingNewStock:
             query = "SELECT adjClose FROM timeseriesdaily " \
                     "WHERE ticker=%s " \
                     "AND date<=DATE(%s) " \
                     "ORDER BY date DESC LIMIT %s"
-            closes = self.select(query, (ticker, lastUpdated, maxSMA))
+            closes = self.select(query, (ticker, lastUpdated, maxPeriod))
             for close in reversed(closes):
                 closeHist.append(close[0])
+        fc = Finance.FinanceCalculator()
         first = True
         noOfPoints = len(points)
         points = list(reversed(points))
@@ -261,7 +254,9 @@ class DBManager:
             pointInHistory = history.get(point)
             date = pointToDate(point)
             if i < noOfPoints - 1:
-                dateTmrw = pointToDate(points[i + 1])  # If updating need to update row with null dateTrmw as first date
+                dateTmrw = pointToDate(points[i + 1])
+                if dateTmrw == datetime.date.today():
+                    dateTmrw = None
             else:
                 dateTmrw = None
             # We do not add records to the database that are recorded as today, as the values vary over the day
@@ -281,13 +276,15 @@ class DBManager:
                             (ticker,))
                         adjCloseBefore = result[0][0]
                         adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
+                        self.insert("UPDATE timeseriesdaily SET dateTmrw=%s WHERE ticker=%s AND dateTmrw IS NULL",
+                                        (date, ticker))
                     first = False
                 else:
                     adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
                 closeHist.append(adjClose)
-                pDiffClose5SMA = smaPDiff(closeHist, 5)
-                pDiffClose8SMA = smaPDiff(closeHist, 8)
-                pDiffClose13SMA = smaPDiff(closeHist, 13)
+                pDiffClose5SMA = fc.smaPDiff(closeHist, 5)
+                pDiffClose8SMA = fc.smaPDiff(closeHist, 8)
+                pDiffClose13SMA = fc.smaPDiff(closeHist, 13)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA]
                 if fieldsToRestore is not None:
