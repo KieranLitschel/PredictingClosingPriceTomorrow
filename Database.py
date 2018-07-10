@@ -246,6 +246,9 @@ class DBManager:
             for close in reversed(closes):
                 closeHist.append(close[0])
             fc = Finance.FinanceCalculator(seriesSoFar=closeHist[0:14])
+            result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s",(ticker,))
+            fc.averageUpward.append(result[0][0])
+            fc.averageDownward.append(result[0][1])
         else:
             fc = Finance.FinanceCalculator()
         first = True
@@ -299,6 +302,15 @@ class DBManager:
                         arg.append(value)
                 args.append(tuple(arg))
                 adjCloseBefore = adjClose
+        try:
+            averageUpward = fc.averageUpward[-1]
+            averageDownward = fc.averageDownward[-1]
+            result = self.select("SELECT averageUpward, averageDownward FROM tickers WHERE ticker = %s", (ticker,))
+            self.insert(
+                "UPDATE tickers SET averageUpward_backup=%s, averageDownward_backup=%s, averageUpward=%s, averageDownward=%s WHERE ticker = %s",
+                (result[0][0], result[0][1], averageUpward, averageDownward, ticker))
+        except IndexError:
+            pass
 
     def addNewStock(self, ticker, sector, fieldsToRestore=None, columnNames=[]):
         lastUpdated = datetime.date.today()
@@ -311,7 +323,7 @@ class DBManager:
         self.insert(query, args)
         args = []
         self.timeseriesToArgs(ticker, points, history, args, fieldsToRestore=fieldsToRestore,
-                                  columnNames=columnNames)
+                              columnNames=columnNames)
         self.insert(self.insertAllTSDQuery, args, many=True)
         print('Stock added successfully')
 
