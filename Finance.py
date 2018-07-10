@@ -43,7 +43,10 @@ class FinanceCalculator:
             else:
                 self.averageUpward.append((self.averageUpward[-1] * (period - 1) + self.upward[-1]) / period)
                 self.averageDownward.append((self.averageDownward[-1] * (period - 1) + self.downward[-1]) / period)
-            relativeStrength = self.averageUpward[-1] / self.averageDownward[-1]
-            return 100 - (100 / (relativeStrength + 1))
+            if self.averageDownward[-1]==0:
+                return 100
+            else:
+                relativeStrength = self.averageUpward[-1] / self.averageDownward[-1]
+                return 100 - (100 / (relativeStrength + 1))
         else:
             return None
