@@ -61,6 +61,10 @@ class FinanceCalculator:
             sman = sum(period) / n
             periodStd = statistics.pstdev(period)
             upperBand = sman + periodStd * k
-            return ((upperBand - close) / close) * 100
+            lowerBand = sman - periodStd * k
+            pDiffCloseUpperBand = ((upperBand-close)/close)*100
+            pDiffCloseLowerBand = ((lowerBand-close)/close)*100
+            pDiffSmaAbsBand = ((upperBand-sman)/sman)*100
+            return pDiffCloseUpperBand, pDiffCloseLowerBand, pDiffSmaAbsBand
         else:
-            return None
+            return None, None, None
