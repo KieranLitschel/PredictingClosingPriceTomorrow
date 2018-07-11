@@ -60,4 +60,4 @@ class Classifier:
                 else:
                     return accuracy
         else:
-            return neigh.score(self.testX, self.testY)
+            return neigh.score(self.testX, self.testY)*100
