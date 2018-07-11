@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffClose22BB) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -316,9 +316,10 @@ class DBManager:
                 pDiffClose5SMA = fc.smaPDiff(closeHist, 5)
                 pDiffClose8SMA = fc.smaPDiff(closeHist, 8)
                 pDiffClose13SMA = fc.smaPDiff(closeHist, 13)
+                pDiffClose22BB = fc.bollingerBandsPDiff(closeHist,20,2)
                 rsi = fc.RSI(closeHist)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
-                       pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi]
+                       pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffClose22BB]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -373,6 +374,33 @@ class DBManager:
             query = addFieldsToInsertQuery(query, columnNames)
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
+
+    def readdPickledColumns(self):
+        print("Restoring tickers and sectors...")
+        with open('tickersNSectors.pickle', 'rb') as handle:
+            tickersNSectors = pickle.load(handle)
+        self.insert("INSERT INTO tickers(ticker,sector) VALUES (%s,%s)",tickersNSectors,many=True)
+        print("Restoring columns in timeseriesdaily...")
+        with open('fieldsToRestore.pickle', 'rb') as handle:
+            fieldsToRestore = pickle.load(handle)
+        args = []
+        columns = []
+        for ticker in fieldsToRestore.keys():
+            for date in fieldsToRestore[ticker].keys():
+                arg = [ticker,date]
+                if len(columns)==0:
+                    columns = list(fieldsToRestore[ticker][date].keys())
+                for column in fieldsToRestore[ticker][date].keys():
+                    arg.append(fieldsToRestore[ticker][date][column])
+                args.append(tuple(arg))
+        query = "INSERT INTO timeseriesdaily(ticker,date"
+        endQuery = ") VALUES(%s,DATE(%s)"
+        for column in columns:
+            query += "," + column
+            endQuery += ",%s"
+        query += endQuery+")"
+        self.insert(query,args,many=True)
+        print("Readded all columns")
 
     def readdAllStocks(self, columnsToSave=[]):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
