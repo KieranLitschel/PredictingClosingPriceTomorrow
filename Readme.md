@@ -21,3 +21,14 @@ Conclusions:
 * Begins to plateu at about 100 neighbours, trailing off at around 31% accuracy.
 * There are 4 classes so we would expect an accuracy of around 25% if it was classifying randomly and there was no pattern in the data, so trailing off at 31% accuracy suggests there is some pattern.
 * Considering we are using around 1.9 million samples for training and testing, we should see an increase in accuracy if we increase the number of features.
+### Results of adding feature RSI
+Note that:
+* RSI is the relative strength indicator ([see here](https://www.investopedia.com/terms/r/rsi.asp) for more information)
+* I used the features adjClosePChange, pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, and RSI, although on the red line plotted below I show the results from the last experiment for comparison which I did not train using RSI.
+
+<img src="https://github.com/KieranLitschel/Images/blob/master/KNN%20with%205%20features%20(rsi).png" alt="KNN with and without RSI" style="width: 10px;"/>
+
+Conclusions:
+* Adding RSI increased accuracy on the test set by 0.26%
+* The low increase in accuracy would suggest the variation of RSI is already captured by other features
+* Will leave it as a feature for now, but will consider applying PCA to dataset when I have more features
