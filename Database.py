@@ -110,6 +110,13 @@ class DBManager:
         else:
             return "`%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc))
 
+    def determinedShortestMember(self, existingVals, bandData, bandNo, shortest, offset):
+        if len(existingVals) == 0 and (len(bandData[bandNo]) < shortest):
+            shortest = len(bandData[bandNo])
+        elif len(existingVals) != 0 and (len(bandData[bandNo]) + existingVals[bandNo + offset]) < shortest:
+            shortest = len(bandData[bandNo]) + existingVals[bandNo + offset]
+        return shortest
+
     def updateSetMembers(self, classBands, trainingPc, testPc, validationPc=0):
         noOfClasses = len(classBands) + 1
         name = self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)
@@ -123,6 +130,23 @@ class DBManager:
                 "ALTER TABLE timeseriesdaily ADD %s INT NULL;" % self.getSafeName(noOfClasses, trainingPc, testPc,
                                                                                   validationPc),
                 ())
+        existingVals = self.select(
+            "SELECT COUNT(*) FROM timeseriesdaily GROUP BY {0} ORDER BY {0} ASC".format(
+                self.getSafeName(noOfClasses,
+                                 trainingPc, testPc,
+                                 validationPc)), ())
+        if (validationPc == 0 and len(existingVals) == 2 * noOfClasses + 1) or (
+                validationPc != 0 and len(existingVals) == 3 * noOfClasses + 1):
+            offset = 1
+        elif (validationPc == 0 and len(existingVals) == 2 * noOfClasses) or (
+                validationPc != 0 and len(existingVals) == 3 * noOfClasses):
+            offset = 0
+        if len(existingVals) != 0:
+            for i in range(0, noOfClasses):
+                existingVals[i + offset] = int(existingVals[i + offset][0]) + int(
+                    existingVals[i + offset + noOfClasses][0])
+                if validationPc != 0:
+                    existingVals[i + offset] += int(existingVals[i + offset + noOfClasses * 2][0])
         bandNo = 0
         bandData = []
         shortest = float('inf')
@@ -135,8 +159,7 @@ class DBManager:
             "AND t1.dateTmrw = t2.date "
             "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[0],)))
-        if len(bandData[bandNo]) < shortest:
-            shortest = len(bandData[bandNo])
+        shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
         print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         while bandNo < len(classBands):
@@ -150,8 +173,7 @@ class DBManager:
                     "AND t1.dateTmrw = t2.date "
                     "AND t1.{0} IS NULL".format(name),
                     (classBands[bandNo - 1], classBands[bandNo])))
-            if len(bandData[bandNo]) < shortest:
-                shortest = len(bandData[bandNo])
+            shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
             bandNo += 1
             print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         bandData.append(self.select(
@@ -162,20 +184,25 @@ class DBManager:
             "AND t1.dateTmrw = t2.date "
             "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[-1],)))
-        if len(bandData[bandNo]) < shortest:
-            shortest = len(bandData[bandNo])
+        shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
         print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         args = []
         classNo = 0
         print('Determining classes...')
         argsDict = {}
+        goals = []
+        if len(existingVals) == 0:
+            goal = shortest
         for band in bandData:
             random.shuffle(band)
             hdt = 0
             argsDict[classNo] = []
             argsDict[classNo + noOfClasses] = []
-            while shortest - hdt >= 99:
+            if len(existingVals) != 0:
+                goal = shortest - existingVals[classNo + offset]
+                goals.append(goal)
+            while goal - hdt >= 99:
                 for pc in range(0, 100):
                     if pc < trainingPc:
                         args.append((classNo, band[hdt + pc][0], band[hdt + pc][1]))
@@ -246,7 +273,7 @@ class DBManager:
             for close in reversed(closes):
                 closeHist.append(close[0])
             fc = Finance.FinanceCalculator(seriesSoFar=closeHist[0:14])
-            result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s",(ticker,))
+            result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s", (ticker,))
             fc.averageUpward.append(result[0][0])
             fc.averageDownward.append(result[0][1])
         else:
@@ -329,7 +356,6 @@ class DBManager:
 
     def addManyNewStocks(self, tickersNSectors, fieldsToRestore=None, columnNames=[]):
         completed = 0
-        tickersArgs = []
         timeseriesArgs = []
         for (ticker, sector) in tickersNSectors:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
@@ -337,14 +363,12 @@ class DBManager:
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
             firstDay = pointToDate(points[-1])
-            tickersArgs.append((ticker, sector, firstDay, lastUpdated))
+            self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
+                        (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
             time.sleep(1)  # Can only make ~1 request to the API per second
             completed += 1
-        query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
-                "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        self.insert(query, tickersArgs, many=True)
         query = self.insertAllTSDQuery
         if fieldsToRestore is not None:
             query = addFieldsToInsertQuery(query, columnNames)
