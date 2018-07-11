@@ -1,5 +1,6 @@
 import time
 from sklearn.neighbors import KNeighborsClassifier
+from matplotlib import pyplot as plt
 
 
 class Classifier:
@@ -9,7 +10,7 @@ class Classifier:
         self.testX = testX
         self.testY = testY
 
-    def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True):
+    def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True, graphIt=True, graphTitle=""):
         results = {}
         for i in ks:
             print('Trying k=%s' % i)
@@ -23,10 +24,22 @@ class Classifier:
                     print("k=%s gave accuracy of %.4f%%" % (i, result[i] * 100))
                 else:
                     print("k=%s gave accuracy of %.4f%%" % (i, result * 100))
+        if graphIt:
+            if graphTitle!="":
+                plt.title(graphTitle)
+            else:
+                plt.title("KNN clasification with %s features" % len(self.trainX[0]))
+            plt.xlabel("Number of neighbours")
+            plt.ylabel("Accuracy classifying test set (%)")
+            y = []
+            for i in ks:
+                y.append(results[i])
+            plt.plot(ks,y)
+            plt.show()
         return results
 
     def classifyByKnn(self, k, returnPredictions=True, returnAccuracy=False, printProgress=True, coresToUse=-1):
-        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=coresToUse) # Using ball_tree as kd_tree runs out of memory
+        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=coresToUse)
         if printProgress:
             print("Fitting training data...")
         neigh.fit(self.trainX, self.trainY)
