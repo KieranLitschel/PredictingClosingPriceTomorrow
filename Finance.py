@@ -1,3 +1,6 @@
+import statistics
+
+
 class FinanceCalculator:
 
     def __init__(self, seriesSoFar=None, rsiPeriod=14):
@@ -7,7 +10,7 @@ class FinanceCalculator:
         self.averageDownward = []
         self.rsiPeriod = rsiPeriod
         if seriesSoFar is not None:
-            for i in range(1, len(seriesSoFar)+1):
+            for i in range(1, len(seriesSoFar) + 1):
                 self.RSI(seriesSoFar[0:i])
 
     def reset(self):
@@ -27,10 +30,10 @@ class FinanceCalculator:
         lenSeries = len(series)
         if lenSeries >= 2:
             if series[lenSeries - 1] > series[lenSeries - 2]:
-                self.upward.append(series[lenSeries - 1]-series[lenSeries - 2])
+                self.upward.append(series[lenSeries - 1] - series[lenSeries - 2])
                 self.downward.append(0)
             elif series[lenSeries - 1] < series[lenSeries - 2]:
-                self.downward.append(series[lenSeries - 2]-series[lenSeries - 1])
+                self.downward.append(series[lenSeries - 2] - series[lenSeries - 1])
                 self.upward.append(0)
             else:
                 self.upward.append(0)
@@ -43,10 +46,21 @@ class FinanceCalculator:
             else:
                 self.averageUpward.append((self.averageUpward[-1] * (period - 1) + self.upward[-1]) / period)
                 self.averageDownward.append((self.averageDownward[-1] * (period - 1) + self.downward[-1]) / period)
-            if self.averageDownward[-1]==0:
+            if self.averageDownward[-1] == 0:
                 return 100
             else:
                 relativeStrength = self.averageUpward[-1] / self.averageDownward[-1]
                 return 100 - (100 / (relativeStrength + 1))
+        else:
+            return None
+
+    def bollingerBandsPDiff(self, series, n=20, k=2):
+        if len(series) >= n:
+            close = series[-1]
+            period = series[len(series) - n: len(series)]
+            sman = sum(period) / n
+            periodStd = statistics.pstdev(period)
+            upperBand = sman + periodStd * k
+            return ((upperBand - close) / close) * 100
         else:
             return None
