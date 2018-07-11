@@ -21,9 +21,9 @@ class Classifier:
             results[i] = result
             if printProgress:
                 if returnPredictions and returnAccuracy:
-                    print("k=%s gave accuracy of %.4f%%" % (i, result[i] * 100))
+                    print("k=%s gave accuracy of %.4f%%" % (i, result[0]))
                 else:
-                    print("k=%s gave accuracy of %.4f%%" % (i, result * 100))
+                    print("k=%s gave accuracy of %.4f%%" % (i, result))
         if graphIt:
             if graphTitle!="":
                 plt.title(graphTitle)
@@ -54,7 +54,7 @@ class Classifier:
                 for i in range(0, len(predictedY)):
                     if predictedY[i] == self.testY[i]:
                         correct += 1
-                accuracy = correct / len(predictedY)
+                accuracy = (correct / len(predictedY))*100
                 if returnPredictions:
                     return accuracy, predictedY
                 else:
