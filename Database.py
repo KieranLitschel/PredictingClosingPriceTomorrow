@@ -110,10 +110,10 @@ class DBManager:
         else:
             return "`%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc))
 
-    def determinedShortestMember(self, existingVals, bandData, bandNo, shortest, offset):
-        if len(existingVals) == 0 and (len(bandData[bandNo]) < shortest):
+    def determineShortestMember(self, existingVals, bandData, bandNo, shortest, offset):
+        if len(existingVals) == 1 and (len(bandData[bandNo]) < shortest):
             shortest = len(bandData[bandNo])
-        elif len(existingVals) != 0 and (len(bandData[bandNo]) + existingVals[bandNo + offset]) < shortest:
+        elif len(existingVals) != 1 and (len(bandData[bandNo]) + existingVals[bandNo + offset]) < shortest:
             shortest = len(bandData[bandNo]) + existingVals[bandNo + offset]
         return shortest
 
@@ -138,10 +138,9 @@ class DBManager:
         if (validationPc == 0 and len(existingVals) == 2 * noOfClasses + 1) or (
                 validationPc != 0 and len(existingVals) == 3 * noOfClasses + 1):
             offset = 1
-        elif (validationPc == 0 and len(existingVals) == 2 * noOfClasses) or (
-                validationPc != 0 and len(existingVals) == 3 * noOfClasses):
+        else:
             offset = 0
-        if len(existingVals) != 0:
+        if len(existingVals) != 1:
             for i in range(0, noOfClasses):
                 existingVals[i + offset] = int(existingVals[i + offset][0]) + int(
                     existingVals[i + offset + noOfClasses][0])
@@ -159,7 +158,7 @@ class DBManager:
             "AND t1.dateTmrw = t2.date "
             "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[0],)))
-        shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
+        shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
         print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         while bandNo < len(classBands):
@@ -173,7 +172,7 @@ class DBManager:
                     "AND t1.dateTmrw = t2.date "
                     "AND t1.{0} IS NULL".format(name),
                     (classBands[bandNo - 1], classBands[bandNo])))
-            shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
+            shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
             bandNo += 1
             print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         bandData.append(self.select(
@@ -184,7 +183,7 @@ class DBManager:
             "AND t1.dateTmrw = t2.date "
             "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
             (classBands[-1],)))
-        shortest = self.determinedShortestMember(existingVals, bandData, bandNo, shortest, offset)
+        shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
         print("Fetching data from the database, %.2f%% complete." % (bandNo * 100 / noOfClasses))
         args = []
@@ -192,14 +191,14 @@ class DBManager:
         print('Determining classes...')
         argsDict = {}
         goals = []
-        if len(existingVals) == 0:
+        if len(existingVals) == 1:
             goal = shortest
         for band in bandData:
             random.shuffle(band)
             hdt = 0
             argsDict[classNo] = []
             argsDict[classNo + noOfClasses] = []
-            if len(existingVals) != 0:
+            if len(existingVals) != 1:
                 goal = shortest - existingVals[classNo + offset]
                 goals.append(goal)
             while goal - hdt >= 99:
