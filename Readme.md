@@ -23,18 +23,18 @@ Conclusions:
 * Considering we are using around 1.9 million samples for training and testing, we should see an increase in accuracy if we increase the number of features.
 ### Results of adding feature RSI
 Note that:
-* RSI is the relative strength indicator ([see here](https://www.investopedia.com/terms/r/rsi.asp) for more information)
+* RSI is the relative strength indicator ([see here](https://www.investopedia.com/terms/r/rsi.asp) for more information.
 * I used the features adjClosePChange, pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, and RSI, although on the red line plotted below I show the results from the last experiment for comparison which I did not train using RSI.
 
 <img src="https://github.com/KieranLitschel/Images/blob/master/KNN%20with%205%20features%20(rsi).png" alt="KNN with and without RSI" style="width: 10px;"/>
 
 Conclusions:
-* Adding RSI increased accuracy on the test set by 0.26%
-* The low increase in accuracy would suggest the variation of RSI is already captured by other features
-* Will leave it as a feature for now, but will consider applying PCA to dataset when I have more features
+* Adding RSI increased accuracy on the test set by 0.26%.
+* The low increase in accuracy would suggest the variation of RSI is already captured by other features.
+* Will leave it as a feature for now, but will consider applying PCA to dataset when I have more features.
 ### Results of adding Bollinger Band features
 Note that:
-* Due to a bug I lost the allocation of the samples the test and training set that I used in the last experiment, so there may be slight variations where comparing this graph to the previous, but nothing significant
+* Due to a bug I lost the allocation of the samples the test and training set that I used in the last experiment, so there may be slight variations where comparing this graph to the previous, but nothing significant.
 * I added 3 new features, all related to [bollinger bands](https://www.investopedia.com/terms/b/bollingerbands.asp), they are:
   <dl>
     <dt>pDiffCloseUpperBB and pDiffCloseLowerBB</dt>
@@ -46,4 +46,5 @@ Note that:
 <img src="https://github.com/KieranLitschel/Images/blob/master/KNN%20with%208%20features%20(bollinger%20bands).png" alt="KNN with and without RSI" style="width: 10px;"/>
 
 Conclusions:
-* 0.77% increase in accuracy
+* Adding the 3 features led to a 0.77% increase in accuracy.
+* I was expecting much larger increases in accuracy than I am achieving, as at this rate I don't think I will be able to surpass an accuracy of 40% using KNN, suggesting it is not well suited to the problem. Despite this I will continue to test with KNN while implementing new features, as it is very quick to test and allows me to judge the progress I am making. Once I've generate all the features I have planned I will train a neural network to solve the problem, which I expect will perform much better.
