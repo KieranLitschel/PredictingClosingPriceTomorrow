@@ -2,6 +2,20 @@ import time
 from sklearn.neighbors import KNeighborsClassifier
 from matplotlib import pyplot as plt
 
+def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
+    plt.title("KNN classification with and without "+addedFeature)
+    plt.xlabel("Number of neighbours")
+    plt.ylabel("Accuracy classifying test set (%)")
+    yWith = []
+    yWithout = []
+    for k in ks:
+        yWith.append(fWith[k])
+        yWithout.append(fWithout[k])
+    plt.plot(ks,yWith,color='blue',label='With '+addedFeature)
+    plt.plot(ks,yWithout,color='red',label='Without '+addedFeature)
+    plt.legend()
+    plt.show()
+
 
 class Classifier:
     def __init__(self, trainX, trainY, testX, testY=None):
@@ -28,7 +42,7 @@ class Classifier:
             if graphTitle!="":
                 plt.title(graphTitle)
             else:
-                plt.title("KNN clasification with %s features" % len(self.trainX[0]))
+                plt.title("KNN classification with %s features" % len(self.trainX[0]))
             plt.xlabel("Number of neighbours")
             plt.ylabel("Accuracy classifying test set (%)")
             y = []
