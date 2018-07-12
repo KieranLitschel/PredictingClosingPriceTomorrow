@@ -32,3 +32,18 @@ Conclusions:
 * Adding RSI increased accuracy on the test set by 0.26%
 * The low increase in accuracy would suggest the variation of RSI is already captured by other features
 * Will leave it as a feature for now, but will consider applying PCA to dataset when I have more features
+### Results of adding Bollinger Band features
+Note that:
+* Due to a bug I lost the allocation of the samples the test and training set that I used in the last experiment, so there may be slight variations where comparing this graph to the previous, but nothing significant
+* I added 3 new features, all related to [bollinger bands](https://www.investopedia.com/terms/b/bollingerbands.asp), they are:
+  <dl>
+    <dt>pDiffCloseUpperBB and pDiffCloseLowerBB</dt>
+      <dd>The percentage difference between the closing price on a day and the lower bollinger band and upper bollinger band respectively.</dd>
+    <dt>pDiff20SMAAbsBB</dt>
+      <dd>This is the difference between the SMA used and the upper bollinger band, to help identify when bollinger bands are squeezing.       </dd>
+  </dl>
+
+<img src="https://github.com/KieranLitschel/Images/blob/master/KNN%20with%208%20features%20(bollinger%20bands).png" alt="KNN with and without RSI" style="width: 10px;"/>
+
+Conclusions:
+* 0.77% increase in accuracy
