@@ -24,6 +24,22 @@ class FinanceCalculator:
         else:
             return None
 
+    def pDiffBetweenSMAs(self, series, periods):
+        SMAs=[]
+        for period in periods:
+            if len(series) >= period:
+                SMAs.append(sum(series[len(series) - period: len(series)]) / period)
+            else:
+                SMAs.append(None)
+        pDiffSMAs = []
+        for i in range(0,len(SMAs)):
+            for j in range(i+1,len(SMAs)):
+                if SMAs[i] is not None and SMAs[j] is not None and SMAs[j]!=0:
+                    pDiffSMAs.append((SMAs[i]-SMAs[j])/SMAs[j])
+                else:
+                    pDiffSMAs.append(None)
+        return pDiffSMAs
+
     # The equation for RSI can vary, but I am using the one from this video https://www.youtube.com/watch?v=WZbOeFsSirM
     def RSI(self, series):
         period = self.rsiPeriod  # These first two variables just help readability of the code

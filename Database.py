@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -316,11 +316,15 @@ class DBManager:
                 pDiffClose5SMA = fc.smaPDiff(closeHist, 5)
                 pDiffClose8SMA = fc.smaPDiff(closeHist, 8)
                 pDiffClose13SMA = fc.smaPDiff(closeHist, 13)
-                pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB = fc.bollingerBandsPDiff(closeHist, 20, 2)
                 rsi = fc.RSI(closeHist)
+                pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB = fc.bollingerBandsPDiff(closeHist, 20, 2)
+                pDiffSMAs = fc.pDiffBetweenSMAs(closeHist,[5,8,13])
+                pDiff5SMA8SMA=pDiffSMAs[0]
+                pDiff5SMA13SMA=pDiffSMAs[1]
+                pDiff8SMA13SMA=pDiffSMAs[2]
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
-                       pDiff20SMAAbsBB]
+                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
