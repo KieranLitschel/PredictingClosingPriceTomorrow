@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -257,7 +257,7 @@ class DBManager:
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
                          columnNames=[]):
-        maxPeriod = 20
+        maxPeriod = 26
         if lastUpdated == datetime.date.min:
             addingNewStock = True
         else:
@@ -322,9 +322,10 @@ class DBManager:
                 pDiff5SMA8SMA=pDiffSMAs[0]
                 pDiff5SMA13SMA=pDiffSMAs[1]
                 pDiff8SMA13SMA=pDiffSMAs[2]
+                _,_,macdHist = fc.MACD(closeHist)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
-                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA]
+                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -356,7 +357,10 @@ class DBManager:
         args = []
         self.timeseriesToArgs(ticker, points, history, args, fieldsToRestore=fieldsToRestore,
                               columnNames=columnNames)
-        self.insert(self.insertAllTSDQuery, args, many=True)
+        query = self.insertAllTSDQuery
+        if fieldsToRestore is not None:
+            query = addFieldsToInsertQuery(query, columnNames)
+        self.insert(query, args, many=True)
         print('Stock added successfully')
 
     def addManyNewStocks(self, tickersNSectors, fieldsToRestore=None, columnNames=[]):
@@ -407,7 +411,7 @@ class DBManager:
         self.insert(query, args, many=True)
         print("Readded all columns")
 
-    def readdAllStocks(self, columnsToSave=[]):
+    def readdAllStocks(self, columnsToSave=['`4_80_20`']):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
         with open('tickersNSectors.pickle', 'wb') as handle:
             pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -434,14 +438,16 @@ class DBManager:
         print('Readding new table along with saved rows')
         self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
-    def readdStock(self, ticker, columnsToSave=[]):
-        sector = self.select("SELECT sector FROM timeseriesdaily WHERE=%s", (ticker,))
+    def readdStock(self, ticker, columnsToSave=['`4_80_20`']):
+        sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
             query += ", " + column
         query += " FROM timeseriesdaily WHERE ticker=%s"
+        print('Getting data to save...')
         result = self.select(query, (ticker,))
         fieldsToRestore = {}
+        print('Indexing data to save...')
         for row in result:
             if row[0] not in fieldsToRestore.keys():
                 fieldsToRestore[row[0]] = {}
@@ -449,9 +455,12 @@ class DBManager:
                 fieldsToRestore[row[0]][row[1]] = {}
             for i in range(0, len(columnsToSave)):
                 fieldsToRestore[row[0]][row[1]][columnsToSave[i]] = row[i + 2]
+        print('Saving data...')
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print('Deleteing ticker from table...')
         self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
+        print('Readding stock...')
         self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
     def updateAllStocks(self):

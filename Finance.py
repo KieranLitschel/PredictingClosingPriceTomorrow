@@ -3,11 +3,14 @@ import statistics
 
 class FinanceCalculator:
 
-    def __init__(self, seriesSoFar=None, rsiPeriod=14):
+    def __init__(self, seriesSoFar=None, rsiPeriod=14, emas=[12, 26]):
         self.upward = []
         self.averageUpward = []
         self.downward = []
         self.averageDownward = []
+        self.lastEMA = {}
+        self.prevDifferences = []
+        self.prevSignal = None
         self.rsiPeriod = rsiPeriod
         if seriesSoFar is not None:
             for i in range(1, len(seriesSoFar) + 1):
@@ -25,17 +28,17 @@ class FinanceCalculator:
             return None
 
     def pDiffBetweenSMAs(self, series, periods):
-        SMAs=[]
+        SMAs = []
         for period in periods:
             if len(series) >= period:
                 SMAs.append(sum(series[len(series) - period: len(series)]) / period)
             else:
                 SMAs.append(None)
         pDiffSMAs = []
-        for i in range(0,len(SMAs)):
-            for j in range(i+1,len(SMAs)):
-                if SMAs[i] is not None and SMAs[j] is not None and SMAs[j]!=0:
-                    pDiffSMAs.append((SMAs[i]-SMAs[j])/SMAs[j])
+        for i in range(0, len(SMAs)):
+            for j in range(i + 1, len(SMAs)):
+                if SMAs[i] is not None and SMAs[j] is not None and SMAs[j] != 0:
+                    pDiffSMAs.append((SMAs[i] - SMAs[j]) / SMAs[j])
                 else:
                     pDiffSMAs.append(None)
         return pDiffSMAs
@@ -78,9 +81,40 @@ class FinanceCalculator:
             periodStd = statistics.pstdev(period)
             upperBand = sman + periodStd * k
             lowerBand = sman - periodStd * k
-            pDiffCloseUpperBand = ((upperBand-close)/close)*100
-            pDiffCloseLowerBand = ((lowerBand-close)/close)*100
-            pDiffSmaAbsBand = ((upperBand-sman)/sman)*100
+            pDiffCloseUpperBand = ((upperBand - close) / close) * 100
+            pDiffCloseLowerBand = ((lowerBand - close) / close) * 100
+            pDiffSmaAbsBand = ((upperBand - sman) / sman) * 100
             return pDiffCloseUpperBand, pDiffCloseLowerBand, pDiffSmaAbsBand
         else:
             return None, None, None
+
+    def EMA(self, series, period):
+        if len(series) >= period:
+            prevEMA = self.lastEMA.get(period)
+            if prevEMA is None:
+                ema = sum(series[len(series) - period: len(series)]) / period
+            else:
+                factor = 2/(period+1)
+                ema = ((series[-1]-prevEMA)*factor)+prevEMA
+            self.lastEMA[period] = ema
+        else:
+            ema = None
+        return ema
+
+    def MACD(self, series):
+        if len(series) >= 26:
+            fastEMA = self.EMA(series,12)
+            slowEMA = self.EMA(series,26)
+            difference = fastEMA-slowEMA
+            self.prevDifferences.append(difference)
+            if len(self.prevDifferences)>=9:
+                signal = self.EMA(self.prevDifferences,9)
+                histogram = difference-signal
+            else:
+                signal = None
+                histogram = None
+        else:
+            difference = None
+            signal = None
+            histogram = None
+        return difference, signal, histogram
