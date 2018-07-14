@@ -8,13 +8,16 @@ class FinanceCalculator:
         self.averageUpward = []
         self.downward = []
         self.averageDownward = []
-        self.lastEMA = {}
-        self.prevDifferences = []
-        self.prevSignal = None
         self.rsiPeriod = rsiPeriod
         if seriesSoFar is not None:
             for i in range(1, len(seriesSoFar) + 1):
                 self.RSI(seriesSoFar[0:i])
+        self.lastEMA = {}
+        self.prevDifferences = []
+        self.prevSignal = None
+        self.highs = []
+        self.lows = []
+        self.pKs = []
 
     def reset(self):
         self.__init__()
@@ -118,3 +121,23 @@ class FinanceCalculator:
             signal = None
             histogram = None
         return difference, signal, histogram
+
+    def stochasticOscilator(self, high, low, close):
+        self.highs.append(high)
+        self.lows.append(low)
+        fastKPeriod = 5
+        slowKPeriod = 3
+        if len(self.lows)>=fastKPeriod:
+            l5 = min(self.lows[len(self.lows) - fastKPeriod: len(self.lows)])
+            h5 = max(self.highs[len(self.highs) - fastKPeriod: len(self.highs)])
+            pK = ((close-l5)/(h5-l5))*100
+            self.pKs.append(pK)
+            if len(self.pKs)>=slowKPeriod:
+                pD = sum(self.pKs[len(self.pKs) - slowKPeriod: len(self.pKs)]) / slowKPeriod
+            else:
+                pD = None
+        else:
+            pK = None
+            pD = None
+        return pK, pD
+
