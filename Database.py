@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -262,7 +262,7 @@ class DBManager:
             addingNewStock = True
         else:
             addingNewStock = False
-        closeHist = []
+        adjCloseHist = []
         if not addingNewStock:
             query = "SELECT adjClose FROM timeseriesdaily " \
                     "WHERE ticker=%s " \
@@ -270,8 +270,8 @@ class DBManager:
                     "ORDER BY date DESC LIMIT %s"
             closes = self.select(query, (ticker, lastUpdated, maxPeriod))
             for close in reversed(closes):
-                closeHist.append(close[0])
-            fc = Finance.FinanceCalculator(seriesSoFar=closeHist[0:14])
+                adjCloseHist.append(close[0])
+            fc = Finance.FinanceCalculator(seriesSoFar=adjCloseHist[0:14])
             result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s", (ticker,))
             fc.averageUpward.append(result[0][0])
             fc.averageDownward.append(result[0][1])
@@ -313,24 +313,25 @@ class DBManager:
                     first = False
                 else:
                     adjClosePChange = ((adjClose - adjCloseBefore) / adjCloseBefore) * 100
-                closeHist.append(adjClose)
-                pDiffClose5SMA = fc.smaPDiff(closeHist, 5)
-                pDiffClose8SMA = fc.smaPDiff(closeHist, 8)
-                pDiffClose13SMA = fc.smaPDiff(closeHist, 13)
-                rsi = fc.RSI(closeHist)
-                pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB = fc.bollingerBandsPDiff(closeHist, 20, 2)
-                pDiffSMAs = fc.pDiffBetweenSMAs(closeHist,[5,8,13])
+                adjCloseHist.append(adjClose)
+                pDiffClose5SMA = fc.smaPDiff(adjCloseHist, 5)
+                pDiffClose8SMA = fc.smaPDiff(adjCloseHist, 8)
+                pDiffClose13SMA = fc.smaPDiff(adjCloseHist, 13)
+                rsi = fc.RSI(adjCloseHist)
+                pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB = fc.bollingerBandsPDiff(adjCloseHist, 20, 2)
+                pDiffSMAs = fc.pDiffBetweenSMAs(adjCloseHist,[5,8,13])
                 pDiff5SMA8SMA=pDiffSMAs[0]
                 pDiff5SMA13SMA=pDiffSMAs[1]
                 pDiff8SMA13SMA=pDiffSMAs[2]
-                _,_,macdHist = fc.MACD(closeHist)
+                _,_,macdHist = fc.MACD(adjCloseHist)
                 if macdHistBefore is not None and macdHist is not None:
                     deltaMacdHist = macdHist-macdHistBefore
                 else:
                     deltaMacdHist = None
+                stochPK, stochPD = fc.stochasticOscilator(high,low,close)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
-                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist]
+                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -390,11 +391,12 @@ class DBManager:
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
-    def readdPickledColumns(self):
+    def readdPickledColumns(self, singleStock=False):
         print("Restoring tickers and sectors...")
-        with open('tickersNSectors.pickle', 'rb') as handle:
-            tickersNSectors = pickle.load(handle)
-        self.insert("INSERT INTO tickers(ticker,sector) VALUES (%s,%s)", tickersNSectors, many=True)
+        if not singleStock:
+            with open('tickersNSectors.pickle', 'rb') as handle:
+                tickersNSectors = pickle.load(handle)
+            self.insert("INSERT INTO tickers(ticker,sector) VALUES (%s,%s)", tickersNSectors, many=True)
         print("Restoring columns in timeseriesdaily...")
         with open('fieldsToRestore.pickle', 'rb') as handle:
             fieldsToRestore = pickle.load(handle)
