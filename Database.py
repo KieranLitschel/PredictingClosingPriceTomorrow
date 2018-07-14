@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -319,19 +319,26 @@ class DBManager:
                 pDiffClose13SMA = fc.smaPDiff(adjCloseHist, 13)
                 rsi = fc.RSI(adjCloseHist)
                 pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB = fc.bollingerBandsPDiff(adjCloseHist, 20, 2)
-                pDiffSMAs = fc.pDiffBetweenSMAs(adjCloseHist,[5,8,13])
-                pDiff5SMA8SMA=pDiffSMAs[0]
-                pDiff5SMA13SMA=pDiffSMAs[1]
-                pDiff8SMA13SMA=pDiffSMAs[2]
-                _,_,macdHist = fc.MACD(adjCloseHist)
+                pDiffSMAs = fc.pDiffBetweenSMAs(adjCloseHist, [5, 8, 13])
+                pDiff5SMA8SMA = pDiffSMAs[0]
+                pDiff5SMA13SMA = pDiffSMAs[1]
+                pDiff8SMA13SMA = pDiffSMAs[2]
+                _, _, macdHist = fc.MACD(adjCloseHist)
                 if macdHistBefore is not None and macdHist is not None:
-                    deltaMacdHist = macdHist-macdHistBefore
+                    deltaMacdHist = macdHist - macdHistBefore
                 else:
                     deltaMacdHist = None
-                stochPK, stochPD = fc.stochasticOscilator(high,low,close)
+                fc.updateHighLowClose(high, low, close)
+                stochPK, stochPD = fc.stochasticOscilator()
+                pdi, ndi, adx = fc.ADX()
+                if pdi is None or ndi is None or ndi==0:
+                    pDiffPdiNdi = None
+                else:
+                    pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
-                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD]
+                       pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
+                       stochPD, adx, pDiffPdiNdi]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None

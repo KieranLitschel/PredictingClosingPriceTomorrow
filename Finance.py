@@ -18,6 +18,11 @@ class FinanceCalculator:
         self.highs = []
         self.lows = []
         self.pKs = []
+        self.pdms = []
+        self.ndms = []
+        self.trs = []
+        self.closes = []
+        self.pdisMinusNdis = []
 
     def reset(self):
         self.__init__()
@@ -91,28 +96,28 @@ class FinanceCalculator:
         else:
             return None, None, None
 
-    def EMA(self, series, period):
+    def EMA(self, series, period, label=""):
         if len(series) >= period:
-            prevEMA = self.lastEMA.get(period)
+            prevEMA = self.lastEMA.get(str(period) + label)
             if prevEMA is None:
                 ema = sum(series[len(series) - period: len(series)]) / period
             else:
-                factor = 2/(period+1)
-                ema = ((series[-1]-prevEMA)*factor)+prevEMA
-            self.lastEMA[period] = ema
+                factor = 2 / (period + 1)
+                ema = ((series[-1] - prevEMA) * factor) + prevEMA
+            self.lastEMA[str(period) + label] = ema
         else:
             ema = None
         return ema
 
     def MACD(self, series):
         if len(series) >= 26:
-            fastEMA = self.EMA(series,12)
-            slowEMA = self.EMA(series,26)
-            difference = fastEMA-slowEMA
+            fastEMA = self.EMA(series, 12, "MACDfastEMA")
+            slowEMA = self.EMA(series, 26, "MACDslowEMA")
+            difference = fastEMA - slowEMA
             self.prevDifferences.append(difference)
-            if len(self.prevDifferences)>=9:
-                signal = self.EMA(self.prevDifferences,9)
-                histogram = difference-signal
+            if len(self.prevDifferences) >= 9:
+                signal = self.EMA(self.prevDifferences, 9, "MACDsignal")
+                histogram = difference - signal
             else:
                 signal = None
                 histogram = None
@@ -122,22 +127,60 @@ class FinanceCalculator:
             histogram = None
         return difference, signal, histogram
 
-    def stochasticOscilator(self, high, low, close):
+    def updateHighLowClose(self, high, low, close):
         self.highs.append(high)
         self.lows.append(low)
+        self.closes.append(close)
+
+    def stochasticOscilator(self):
+        close = self.closes[-1]
         fastKPeriod = 5
         slowKPeriod = 3
-        if len(self.lows)>=fastKPeriod:
+        if len(self.lows) >= fastKPeriod:
             l5 = min(self.lows[len(self.lows) - fastKPeriod: len(self.lows)])
             h5 = max(self.highs[len(self.highs) - fastKPeriod: len(self.highs)])
-            pK = ((close-l5)/(h5-l5))*100
-            self.pKs.append(pK)
-            if len(self.pKs)>=slowKPeriod:
-                pD = sum(self.pKs[len(self.pKs) - slowKPeriod: len(self.pKs)]) / slowKPeriod
+            if h5-l5!=0:
+                pK = ((close - l5) / (h5 - l5)) * 100
+                self.pKs.append(pK)
+                if len(self.pKs) >= slowKPeriod:
+                    pD = sum(self.pKs[len(self.pKs) - slowKPeriod: len(self.pKs)]) / slowKPeriod
+                else:
+                    pD = None
             else:
-                pD = None
+                self.pKs=[]
+                pK=None
+                pD=None
         else:
             pK = None
             pD = None
         return pK, pD
 
+    def ADX(self):
+        pdi=None
+        ndi=None
+        adx=None
+        if len(self.closes)>=2:
+            self.trs.append(max(self.highs[-1] - self.lows[-1], abs(self.highs[-1] - self.closes[-2]),
+                                abs(self.lows[-1] - self.closes[-2])))
+            moveUp = self.highs[-1] - self.highs[-2]
+            moveDown = self.lows[-2] - self.lows[-1]
+            if moveUp > moveDown and moveUp > 0:
+                pdm = moveUp
+            else:
+                pdm = 0
+            self.pdms.append(pdm)
+            if moveDown > moveUp and moveDown > 0:
+                ndm = moveDown
+            else:
+                ndm = 0
+            self.ndms.append(ndm)
+            if len(self.pdms) >= 14:
+                pdmEMA = self.EMA(self.pdms, 14, "ADXpdm")
+                ndmEMA = self.EMA(self.ndms, 14, "ADXndm")
+                atr = self.EMA(self.trs, 14, "ADXatr")
+                pdi = 100 * (pdmEMA / atr)
+                ndi = 100 * (ndmEMA / atr)
+                self.pdisMinusNdis.append(abs(pdi - ndi))
+                if len(self.pdisMinusNdis) >= 14:
+                    adx = 100 * self.EMA(self.pdisMinusNdis,14) / (pdi + ndi)
+        return pdi,ndi,adx
