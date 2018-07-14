@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -280,6 +280,7 @@ class DBManager:
         first = True
         noOfPoints = len(points)
         points = list(reversed(points))
+        macdHistBefore = None
         for i in range(0, noOfPoints):
             point = points[i]
             pointInHistory = history.get(point)
@@ -323,9 +324,13 @@ class DBManager:
                 pDiff5SMA13SMA=pDiffSMAs[1]
                 pDiff8SMA13SMA=pDiffSMAs[2]
                 _,_,macdHist = fc.MACD(closeHist)
+                if macdHistBefore is not None and macdHist is not None:
+                    deltaMacdHist = macdHist-macdHistBefore
+                else:
+                    deltaMacdHist = None
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
-                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist]
+                       pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -335,6 +340,7 @@ class DBManager:
                         arg.append(value)
                 args.append(tuple(arg))
                 adjCloseBefore = adjClose
+                macdHistBefore = macdHist
         try:
             averageUpward = fc.averageUpward[-1]
             averageDownward = fc.averageDownward[-1]
