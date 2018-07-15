@@ -73,4 +73,5 @@ We see an increase of accuracy of 0.19% as a result of adding this feature, and 
 Increasing the number of features has made testing new features significantly slower, as a result in future experiments I will try neighbours in the range 60 to 110, as there appears to be a trend that from 60 onwards accuracy begins to plateu.
 ### Results of adding ADX
 I decided to include [ADX](https://www.investopedia.com/articles/trading/07/adx-trend-indicator.asp) as it is a very popular indicator that is used to determine trends in price movemement and whether they are trailing off or strengthening, which should help indicate which way the closing price will move tomorrow.
+
 Unfortunately the testing time increased again, and it was taking 10 minutes to test for each value of k, hence I have decided I will no longer experiment with KNN, and just focus on implementing features and then training a neural networl.
