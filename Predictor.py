@@ -3,7 +3,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from matplotlib import pyplot as plt
 import tensorflow as tf
 from sklearn.metrics import accuracy_score
-import numpy as np
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -82,7 +81,7 @@ class Classifier:
         else:
             return neigh.score(self.testX, self.testY) * 100
 
-    def classifyByLogRegRiseOrFall(self,name):
+    def classifyByLogRegRiseOrFall(self, name):
         # Generate tensorflow graph
         with tf.name_scope("placeholders"):
             tfTrainX = tf.placeholder(tf.float32, self.trainX.shape)
@@ -100,7 +99,7 @@ class Classifier:
 
         with tf.name_scope("loss"):
             # Compute the cross-entropy term for each datapoint
-            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=self.trainY)
+            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=self.testY)
             # Sum all contributions
             l = tf.reduce_sum(entropy)
         with tf.name_scope("optim"):
@@ -110,7 +109,7 @@ class Classifier:
             tf.summary.scalar("loss", l)
             merged = tf.summary.merge_all()
 
-        train_writer = tf.summary.FileWriter('/predcloseprice/'+name, tf.get_default_graph())
+        train_writer = tf.summary.FileWriter('/predcloseprice/' + name, tf.get_default_graph())
 
         n_steps = 1000
         with tf.Session() as sess:
