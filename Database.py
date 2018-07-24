@@ -234,14 +234,14 @@ class DBManager:
         for reqNotNull in reqNotNulls:
             query += "AND " + reqNotNull + " IS NOT NULL "
         print('Getting training data...')
-        trainX = np.array(self.select(query, (0, noOfClasses - 1)))
+        trainX = np.array(self.select(query, (0, noOfClasses - 1)), np.float32)
         trainY = trainX[:, 0]
         trainX = np.delete(trainX, 0, 1)
         mean = np.mean(trainX, axis=0)
         std = np.std(trainX, axis=0)
         trainX = (trainX - mean) / std
         print('Getting testing data...')
-        testX = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)))
+        testX = np.array(self.select(query, (noOfClasses, 2 * noOfClasses - 1)), np.float32)
         testY = testX[:, 0] - noOfClasses
         testX = np.delete(testX, 0, 1)
         testX = (testX - mean) / std
@@ -331,7 +331,7 @@ class DBManager:
                 fc.updateHighLowClose(high, low, close)
                 stochPK, stochPD = fc.stochasticOscilator()
                 pdi, ndi, adx = fc.ADX()
-                if pdi is None or ndi is None or ndi==0:
+                if pdi is None or ndi is None or ndi == 0:
                     pDiffPdiNdi = None
                 else:
                     pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
@@ -426,7 +426,7 @@ class DBManager:
         self.insert(query, args, many=True)
         print("Readded all columns")
 
-    def readdAllStocks(self, columnsToSave=['`4_80_20`']):
+    def readdAllStocks(self, columnsToSave=['`4_80_20`', '`2_80_20`']):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
         with open('tickersNSectors.pickle', 'wb') as handle:
             pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -453,7 +453,7 @@ class DBManager:
         print('Readding new table along with saved rows')
         self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
-    def readdStock(self, ticker, columnsToSave=['`4_80_20`']):
+    def readdStock(self, ticker, columnsToSave=['`4_80_20`', '`2_80_20`']):
         sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
