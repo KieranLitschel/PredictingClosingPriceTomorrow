@@ -81,7 +81,7 @@ class Classifier:
         else:
             return neigh.score(self.testX, self.testY) * 100
 
-    def classifyByLogRegRiseOrFall(self, name):
+    def classifyByLogRegRiseOrFall(self, name, n_steps, learningRate):
         # Generate tensorflow graph
         with tf.name_scope("placeholders"):
             tfTrainX = tf.placeholder(tf.float32, self.trainX.shape)
@@ -91,7 +91,7 @@ class Classifier:
             W = tf.Variable(tf.random_normal((self.noOfFeatures, 1)))
             b = tf.Variable(tf.random_normal((1,)))
         with tf.name_scope("prediction"):
-            y_logit = tf.squeeze(tf.matmul(self.testX, W) + b)
+            y_logit = tf.squeeze(tf.matmul(self.trainX, W) + b)
             # the sigmoid gives the class probability of 1
             y_one_prob = tf.sigmoid(y_logit)
             # Rounding P(y=1) will give the correct prediction.
@@ -99,11 +99,11 @@ class Classifier:
 
         with tf.name_scope("loss"):
             # Compute the cross-entropy term for each datapoint
-            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=self.testY)
+            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=self.trainY)
             # Sum all contributions
             l = tf.reduce_sum(entropy)
         with tf.name_scope("optim"):
-            train_op = tf.train.AdamOptimizer(.01).minimize(l)
+            train_op = tf.train.AdamOptimizer(learningRate).minimize(l)
 
         with tf.name_scope("summaries"):
             tf.summary.scalar("loss", l)
@@ -111,7 +111,6 @@ class Classifier:
 
         train_writer = tf.summary.FileWriter('/predcloseprice/' + name, tf.get_default_graph())
 
-        n_steps = 1000
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             # Train model
@@ -122,7 +121,13 @@ class Classifier:
                 train_writer.add_summary(summary, i)
 
             # Make Predictions
-            y_pred_np = sess.run(y_pred, feed_dict={tfTestX: self.testX})
+            y_pred_train = sess.run(y_pred, feed_dict={tfTrainX: self.trainX})
+            y_pred_test = sess.run(tf.round(tf.sigmoid(tf.squeeze(tf.matmul(self.testX, W) + b))),
+                     feed_dict={tfTestX: self.testX})
 
-        score = accuracy_score(self.testY, y_pred_np)
+        score = accuracy_score(self.trainY, y_pred_train)
         print("Training Set Accuracy: %f" % score)
+        score = accuracy_score(self.testY, y_pred_test)
+        print("Test Set Accuracy: %f" % score)
+
+        train_writer.close()
