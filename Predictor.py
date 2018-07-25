@@ -3,6 +3,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from matplotlib import pyplot as plt
 import tensorflow as tf
 from sklearn.metrics import accuracy_score
+from tensorflow.contrib.tensor_forest.python import tensor_forest
+from tensorflow.python.ops import resources
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -21,12 +23,15 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
 
 
 class Classifier:
-    def __init__(self, trainX, trainY, testX, testY=None):
+    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None):
         self.trainX = trainX
         self.trainY = trainY
         self.testX = testX
         self.testY = testY
         self.noOfFeatures = self.trainX.shape[1]
+        self.noOfClasses = noOfClasses
+        self.validX = validX
+        self.validY = validY
 
     def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True,
                              graphIt=True, graphTitle=""):
@@ -81,6 +86,7 @@ class Classifier:
         else:
             return neigh.score(self.testX, self.testY) * 100
 
+    # This method is based off the template from the sample code of the book Tensorflow for Deep Learning
     def classifyByLogRegRiseOrFall(self, name, n_steps, learningRate):
         # Generate tensorflow graph
         with tf.name_scope("placeholders"):
@@ -123,7 +129,7 @@ class Classifier:
             # Make Predictions
             y_pred_train = sess.run(y_pred, feed_dict={tfTrainX: self.trainX})
             y_pred_test = sess.run(tf.round(tf.sigmoid(tf.squeeze(tf.matmul(self.testX, W) + b))),
-                     feed_dict={tfTestX: self.testX})
+                                   feed_dict={tfTestX: self.testX})
 
         score = accuracy_score(self.trainY, y_pred_train)
         print("Training Set Accuracy: %f" % score)
@@ -131,3 +137,52 @@ class Classifier:
         print("Test Set Accuracy: %f" % score)
 
         train_writer.close()
+
+    # Note that tensor_forest is not supported on windows in the build of tensorflow I used in this project, so this method not well tested
+    def classifyByRandomForest(self, noOfEpochs, noOfTrees, maxNoOfNodes):
+        if self.noOfClasses is None:
+            print("Warning: No of classes must be defined in constructor")
+        else:
+            with tf.name_scope("placeholders"):
+                X = tf.placeholder(tf.float32, shape=[None, self.noOfFeatures])
+                Y = tf.placeholder(tf.int32, shape=[None])
+
+            with tf.name_scope("forest"):
+                hParams = tensor_forest.ForestHParams(num_classes=self.noOfClasses, num_features=self.noOfFeatures,
+                                                      num_trees=noOfTrees, max_nodes=maxNoOfNodes).fill()
+                forestGraph = tensor_forest.RandomForestGraphs(hParams)
+
+            with tf.name_scope("optimisers"):
+                trainOp = forestGraph.training_graph(X, Y)
+                lossOp = forestGraph.training_loss(X, Y)
+
+            with tf.name_scope("accuracy"):
+                inferOp, _, _ = forestGraph.inference_graph(X)
+                correctPrediction = tf.equal(tf.arg_max(inferOp, 1), tf.cast(Y, tf.int64))
+                accuracyOp = tf.reduce_mean(tf.cast(correctPrediction, tf.float32))
+
+            initVars = tf.group(tf.global_variables_initializer, resources.shared_resources())
+
+            losses = []
+
+            with tf.Session() as sess:
+                sess.run(initVars)
+                for i in range(1, noOfEpochs + 1):
+                    _, l = sess.run([trainOp, lossOp],
+                                    feed_dict={X: self.trainX, Y: tf.cast(self.trainY, tf.int32)})
+                    if i % 50 == 0 or i == 1:
+                        acc = sess.run(accuracyOp,
+                                       feed_dict={X: self.trainX, Y: tf.cast(self.trainY, tf.int32)})
+                        print('Step %i, Loss: %f, Acc: %f' % (i, l, acc))
+
+                    losses.append(l)
+
+                trainAccs = sess.run(accuracyOp, feed_dict={X: self.trainX, Y: tf.cast(self.trainY, tf.int32)})
+                print("Training accuracy:", trainAccs)
+                if self.validX is not None:
+                    validAccs = sess.run(accuracyOp, feed_dict={X: self.validX, Y: tf.cast(self.validY, tf.int32)})
+                    print("Validation accuracy:", validAccs)
+                testAccs = sess.run(accuracyOp, feed_dict={X: self.trainX, Y: tf.cast(self.trainY, tf.int32)})
+                print("Test accuracy:", testAccs)
+
+            return losses
