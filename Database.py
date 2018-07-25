@@ -426,7 +426,7 @@ class DBManager:
         self.insert(query, args, many=True)
         print("Readded all columns")
 
-    def readdAllStocks(self, columnsToSave=['`4_80_20`', '`2_80_20`']):
+    def readdAllStocks(self, columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
         with open('tickersNSectors.pickle', 'wb') as handle:
             pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -453,7 +453,7 @@ class DBManager:
         print('Readding new table along with saved rows')
         self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
 
-    def readdStock(self, ticker, columnsToSave=['`4_80_20`', '`2_80_20`']):
+    def readdStock(self, ticker, columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
         sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
