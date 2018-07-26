@@ -6,6 +6,8 @@ from sklearn.metrics import accuracy_score
 from tensorflow.contrib.tensor_forest.python import tensor_forest
 from tensorflow.python.ops import resources
 from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+import math
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -24,15 +26,31 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
 
 
 class Classifier:
-    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, coresToUse=6):
-        self.trainX = trainX
-        self.trainY = trainY
-        self.testX = testX
-        self.testY = testY
+    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, coresToUse=6,
+                 usePOfData=100):
+        if usePOfData == 100:
+            self.trainX = trainX
+            self.trainY = trainY
+            self.testX = testX
+            self.testY = testY
+            self.validX = validX
+            self.validY = validY
+        else:
+            np.random.seed(0)
+            cTrain = np.random.choice(len(trainX), size=int(math.floor(len(trainX) * (usePOfData / 100))),
+                                      replace=False)
+            cTest = np.random.choice(len(testX), size=int(math.floor(len(testX) * (usePOfData / 100))), replace=False)
+            self.trainX = trainX[cTrain]
+            self.trainY = trainY[cTrain]
+            self.testX = testX[cTest]
+            self.testY = testY[cTest]
+            if validX is not None:
+                cValid = np.random.choice(len(validX), size=int(math.floor(len(validX) * (usePOfData / 100))),
+                                          replace=False)
+                self.validX = validX[cValid]
+                self.validY = validY[cValid]
         self.noOfFeatures = self.trainX.shape[1]
         self.noOfClasses = noOfClasses
-        self.validX = validX
-        self.validY = validY
         self.coresToUse = coresToUse
 
     def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True,
