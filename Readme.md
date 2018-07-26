@@ -90,7 +90,7 @@ In previous experiments I increased the number of neighbours each time by 5, but
 ## Predicting using random forests
 I will be using the implementation of random forests given in scikit learn as the version of TensorFlow I am using does not support random forests on windows. I first experimented with the number of trees, leaving all other parameters as default.
 
-<img src=https://github.com/KieranLitschel/Images/blob/master/Random%20Forests%20-%20Experiment%201.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/Images/blob/master/Random%20Forests%20-%20Experiment%201.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
 
 The accuracy does not seem to plateu as quickly as we saw for KNN, with increase in accuracy being more gradual and not appearing to tail off. Despite this the time to generate the forests increases rapidly, with it taking 200 seconds for 70 trees, and 300 seconds for 100 trees. Consequently although 100 trees gives a better accuracy I have chosen 70 as the best value for the number of trees in this experiment, with no significant improvement in accuracy after this point.
 
