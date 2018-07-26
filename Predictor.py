@@ -242,21 +242,21 @@ class Classifier:
                     print("Gave valid accs: %.4f%%" %
                           result)
             results.append(result)
-        if graphIt:
-            if graphTitle != "":
-                plt.title(graphTitle)
-            else:
-                plt.title("Random Forest classification changing %s" % change)
-            plt.xlabel(change)
-            plt.ylabel("Accuracy on validation set (%)")
-            y = []
-            for i in range(0, len(results)):
-                if returnPredictions:
-                    y.append(results[i][1])
+            if graphIt and len(results) > 1:
+                if graphTitle != "":
+                    plt.title(graphTitle)
                 else:
-                    y.append(results[i])
-            plt.plot(ks, y)
-            plt.show()
+                    plt.title("Random Forest classification changing %s" % change)
+                plt.xlabel(change)
+                plt.ylabel("Accuracy on validation set (%)")
+                y = []
+                for i in range(0, len(results)):
+                    if returnPredictions:
+                        y.append(results[i][1])
+                    else:
+                        y.append(results[i])
+                plt.plot(ks, y)
+                plt.show()
         return results
 
     def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0, printProgress=True,
