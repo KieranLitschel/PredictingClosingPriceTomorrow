@@ -213,16 +213,16 @@ class Classifier:
             result = self.classifyBySKLRandomForest(noOfTrees=noOfTrees, maxFeaturesPerTree=maxFeaturesPerTree,
                                                     minDepth=minDepth, seed=seed, printProgress=False,
                                                     returnPredictions=returnPredictions,
-                                                    returnAccuracy=returnAccuracy)
+                                                    returnAccuracy=returnAccuracy, predictTest=False)
             if printTime:
                 print('Took %.1f seconds.' % (time.time() - start))
             if printProgress:
                 if returnPredictions and returnAccuracy:
-                    print("Gave train accs: %.4f%%, valid accs: %.4f%%, test accs: %.4f%%" %
-                          (result[1]["train"], result[1]["valid"], result[1]["test"]))
+                    print("Gave valid accs: %.4f%%" %
+                          result[1])
                 else:
-                    print("Gave train accs: %.4f%%, valid accs: %.4f%%, test accs: %.4f%%" %
-                          (result["train"], result["valid"], result["test"]))
+                    print("Gave valid accs: %.4f%%" %
+                          result)
             results.append(result)
         if graphIt:
             if graphTitle != "":
@@ -230,25 +230,19 @@ class Classifier:
             else:
                 plt.title("Random Forest classification changing %s" % change)
             plt.xlabel(change)
-            plt.ylabel("Accuracy (%)")
-            ys = []
-            for set in ["train", "valid", "test"]:
-                y = []
-                for i in range(0, len(results)):
-                    if returnPredictions:
-                        y.append(results[i][1][set])
-                    else:
-                        y.append(results[i][set])
-                ys.append(y)
-            plt.plot(ks, ys[0], label="Training set", color="Green")
-            plt.plot(ks, ys[1], label="Validation set", color="Orange")
-            plt.plot(ks, ys[2], label="Test set", color="Red")
-            plt.legend()
+            plt.ylabel("Accuracy on validation set (%)")
+            y = []
+            for i in range(0, len(results)):
+                if returnPredictions:
+                    y.append(results[i][1])
+                else:
+                    y.append(results[i])
+            plt.plot(ks, y)
             plt.show()
         return results
 
     def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0, printProgress=True,
-                                  returnAccuracy=True, returnPredictions=False):
+                                  returnAccuracy=True, returnPredictions=False, predictTest=True):
         clf = RandomForestClassifier(n_estimators=noOfTrees, max_features=maxFeaturesPerTree,
                                      n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=minDepth)
         if printProgress:
@@ -257,24 +251,28 @@ class Classifier:
         if returnPredictions:
             if printProgress:
                 print("Making predictions...")
-            predictions = {"train": clf.predict(self.trainX), "valid": clf.predict(self.validX),
-                           "test": clf.predict(self.testX)}
+            if predictTest:
+                prediction = clf.predict(self.testX)
+            else:
+                prediction = clf.predict(self.validX)
             if not returnAccuracy:
-                return predictions
+                return prediction
             else:
                 if printProgress:
                     print("Calculating accuracy")
-                accs = {"train": accuracy_score(self.trainY, predictions["train"]) * 100,
-                        "valid": accuracy_score(self.validY, predictions["valid"]) * 100,
-                        "test": accuracy_score(self.testY, predictions["test"]) * 100}
-                if returnPredictions:
-                    return [predictions, accs]
+                if predictTest:
+                    acc = accuracy_score(self.testY, prediction) * 100
                 else:
-                    return accs
+                    acc = accuracy_score(self.validY, prediction) * 100
+                if returnPredictions:
+                    return [prediction, acc]
+                else:
+                    return acc
         else:
             if printProgress:
                 print("Making predictions and calculating accuracy...")
-            accs = {"train": clf.score(self.trainX, self.trainY) * 100,
-                    "valid": clf.score(self.validX, self.validY) * 100,
-                    "test": clf.score(self.testX, self.testY) * 100}
+            if predictTest:
+                accs = clf.score(self.testX, self.testY) * 100
+            else:
+                accs = clf.score(self.validX, self.validY) * 100
             return accs
