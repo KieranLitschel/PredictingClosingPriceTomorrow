@@ -5,6 +5,7 @@ import tensorflow as tf
 from sklearn.metrics import accuracy_score
 from tensorflow.contrib.tensor_forest.python import tensor_forest
 from tensorflow.python.ops import resources
+from sklearn.ensemble import RandomForestClassifier
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -23,7 +24,7 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
 
 
 class Classifier:
-    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None):
+    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, coresToUse=6):
         self.trainX = trainX
         self.trainY = trainY
         self.testX = testX
@@ -32,6 +33,7 @@ class Classifier:
         self.noOfClasses = noOfClasses
         self.validX = validX
         self.validY = validY
+        self.coresToUse = coresToUse
 
     def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True,
                              graphIt=True, graphTitle=""):
@@ -62,8 +64,8 @@ class Classifier:
             plt.show()
         return results
 
-    def classifyByKnn(self, k, returnPredictions=True, returnAccuracy=False, printProgress=True, coresToUse=-1):
-        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=coresToUse)
+    def classifyByKnn(self, k, returnPredictions=True, returnAccuracy=False, printProgress=True):
+        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=self.coresToUse)
         if printProgress:
             print("Fitting training data...")
         neigh.fit(self.trainX, self.trainY)
@@ -139,7 +141,7 @@ class Classifier:
         train_writer.close()
 
     # Note that tensor_forest is not supported on windows in the build of tensorflow I used in this project, so this method not well tested
-    def classifyByRandomForest(self, noOfEpochs, noOfTrees, maxNoOfNodes):
+    def classifyByTFRandomForest(self, noOfEpochs, noOfTrees, maxNoOfNodes):
         if self.noOfClasses is None:
             print("Warning: No of classes must be defined in constructor")
         else:
@@ -186,3 +188,93 @@ class Classifier:
                 print("Test accuracy:", testAccs)
 
             return losses
+
+    def classifyBySKLRandomForestInRange(self, ks, change, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0,
+                                         returnPredictions=False, returnAccuracy=True, printProgress=True,
+                                         printTime=True, graphIt=True, graphTitle=""):
+        results = []
+        for i in ks:
+            if change == "noOfTrees":
+                print('Trying noOfTrees=%s' % i)
+                noOfTrees = i
+            elif change == "maxFeaturesPerTree":
+                print('Trying maxFeaturesPerTree=%s' % i)
+                maxFeaturesPerTree = i
+            elif change == "minDepth":
+                print('Trying minDepth=%s' % i)
+                minDepth = i
+            elif change == "seed":
+                print('Trying seed=%s' % i)
+                seed = i
+            else:
+                print("Variable to change is unrecognised, terminating experiment")
+                break
+            start = time.time()
+            result = self.classifyBySKLRandomForest(noOfTrees=noOfTrees, maxFeaturesPerTree=maxFeaturesPerTree,
+                                                    minDepth=minDepth, seed=seed, printProgress=False,
+                                                    returnPredictions=returnPredictions,
+                                                    returnAccuracy=returnAccuracy)
+            if printTime:
+                print('Took %.1f seconds.' % (time.time() - start))
+            if printProgress:
+                if returnPredictions and returnAccuracy:
+                    print("Gave train accs: %.4f%%, valid accs: %.4f%%, test accs: %.4f%%" %
+                          (result[1]["train"], result[1]["valid"], result[1]["test"]))
+                else:
+                    print("Gave train accs: %.4f%%, valid accs: %.4f%%, test accs: %.4f%%" %
+                          (result["train"], result["valid"], result["test"]))
+            results.append(result)
+        if graphIt:
+            if graphTitle != "":
+                plt.title(graphTitle)
+            else:
+                plt.title("Random Forest classification changing %s" % change)
+            plt.xlabel(change)
+            plt.ylabel("Accuracy (%)")
+            ys = []
+            for set in ["train", "valid", "test"]:
+                y = []
+                for i in range(0, len(results)):
+                    if returnPredictions:
+                        y.append(results[i][1][set])
+                    else:
+                        y.append(results[i][set])
+                ys.append(y)
+            plt.plot(ks, ys[0], label="Training set", color="Green")
+            plt.plot(ks, ys[1], label="Validation set", color="Orange")
+            plt.plot(ks, ys[2], label="Test set", color="Red")
+            plt.legend()
+            plt.show()
+        return results
+
+    def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0, printProgress=True,
+                                  returnAccuracy=True, returnPredictions=False):
+        clf = RandomForestClassifier(n_estimators=noOfTrees, max_features=maxFeaturesPerTree,
+                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=minDepth)
+        if printProgress:
+            print("Generating forest...")
+        clf.fit(self.trainX, self.trainY)
+        if returnPredictions:
+            if printProgress:
+                print("Making predictions...")
+            predictions = {"train": clf.predict(self.trainX), "valid": clf.predict(self.validX),
+                           "test": clf.predict(self.testX)}
+            if not returnAccuracy:
+                return predictions
+            else:
+                if printProgress:
+                    print("Calculating accuracy")
+                accs = {"train": accuracy_score(self.trainY, predictions["train"]) * 100,
+                        "valid": accuracy_score(self.validY, predictions["valid"]) * 100,
+                        "test": accuracy_score(self.testY, predictions["test"]) * 100}
+                if returnPredictions:
+                    return [predictions, accs]
+                else:
+                    return accs
+        else:
+            if printProgress:
+                print("Making predictions and calculating accuracy...")
+            accs = {"train": clf.score(self.trainX, self.trainY) * 100,
+                    "valid": clf.score(self.validX, self.validY) * 100,
+                    "test": clf.score(self.testX, self.testY) * 100}
+            return accs
