@@ -255,7 +255,7 @@ class Classifier:
                         y.append(results[i][1])
                     else:
                         y.append(results[i])
-                plt.plot(ks, y)
+                plt.plot(ks[0:len(results)], y)
                 plt.show()
         return results
 
