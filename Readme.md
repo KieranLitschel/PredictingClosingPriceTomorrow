@@ -93,7 +93,7 @@ I will be using the implementation of random forests given in scikit learn as th
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201a.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
 
-The accuracy does not seem to plateu as quickly as we saw for KNN, with increase in accuracy being more gradual and not appearing to tail off. Despite this the time to generate the forests increases rapidly, with it taking 200 seconds for 70 trees, and 300 seconds for 100 trees. Consequently although 100 trees gives a better accuracy I have chosen 70 as the best value for the number of trees in this experiment, with no significant improvement in accuracy after this point.
+The accuracy does not seem to plateu as quickly as we saw for KNN, with increase in accuracy being more gradual and not appearing to tail off. Despite this the time to generate the forests increases rapidly, with it taking 210 seconds for 70 trees, and 300 seconds for 100 trees. Consequently although 100 trees gives a better accuracy I have chosen 70 as the best value for the number of trees in this experiment, with no significant improvement in accuracy after this point.
 
 ### Experiment 1b - 70 trees, changing maximum number of features
 
@@ -118,3 +118,27 @@ minSamplesLeaf is the minimum number of samples to be at a leaf node. Increasing
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201d.png" alt="Random forests 100 trees, 1 feature per tree, changing minSamplesLeaf" style="width: 10px;"/>
 
 There is no clear trend with the graph, so it is harder to choose the best value. However a value of 50 gives the highest accuracy at 32.9638%, also reducing the time generate and predict to 105 seconds, considering this improvement I will choose a value of 50 for future experiments. 
+
+### Experiment 2a - 70 trees, changing minSamplesLeaf
+
+It seems odd to me that our best value for maximum number of features is 1, as this suggests features should be considering independantly, which does making too much sense considering a lot of them gather information from the same technical indicators. Considering this I have decided it is worth investigating optimising minSamplesLeaf before maximum number of features, and seeing how this impacts when we investigate maximum number of features. 
+
+For this experiment I will be starting with 70 trees as this was the best found for trees without tuning any other hyperparameters.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%202a.png" alt="Changing maximum number of feature" style="width: 10px;"/>
+
+Clearly a value of 60 performs the best here, increasing accuracy to 32.9231% compared to 31.9679% without, and a decrease in time from 210 seconds to 170 seconds.
+
+### Experiment 2b, 2c, 2d
+
+I have not included the graphs of these experiments here as I found no values that increased performance, but the results of these experiments can be found in the results folder in this repository. The experiments are detailed below:
+
+Experiment 2b - Tried maximum of 70 trees and a value of 60 for minSamplesLeaf, changing the maximum number of features, but a maximum of 3 features had been auto selected in the previous experiments and this turned out to be the best value.
+
+Experiment 2c - Tried a value of 60 for minSamplesLeaf and a maximum of 3 features, changing the number of trees, but 70 trees still appeared to be the optimal number.
+
+Experiment 2d - Tried 70 trees, a maximum of 3 features, and a value of 60 for minSamplesLeaf, changing minSamplesSplit, which is the minimum samples required to split an internal node. But found the default value of 2 performed the best.
+
+### Experiment 1f
+
+I did not include the graph of this experiment in the progress log as I saw no improvement. This experiment was similair to 2d, fixing the number of trees to 100, 1 feature per tree, and a value of 50 for minSamplesLeaf, changing the value of minSamplesSplit. But I found no increase in performance from the default value of 2.
