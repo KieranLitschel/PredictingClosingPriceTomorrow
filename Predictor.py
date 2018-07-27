@@ -208,8 +208,9 @@ class Classifier:
             return losses
 
     def classifyBySKLRandomForestInRange(self, ks, change, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0,
-                                         returnPredictions=False, returnAccuracy=True, printProgress=True,
-                                         printTime=True, graphIt=True, graphTitle=""):
+                                         minSamplesSplit=2, bootstrap=True, maxDepth=None, returnPredictions=False,
+                                         returnAccuracy=True, printProgress=True, printTime=True, graphIt=True,
+                                         graphTitle=""):
         results = []
         for i in ks:
             if change == "noOfTrees":
@@ -224,6 +225,12 @@ class Classifier:
             elif change == "seed":
                 print('Trying seed=%s' % i)
                 seed = i
+            elif change == "minSamplesSplit":
+                print('Trying minSampleSplit=%s' % i)
+                seed = i
+            elif change == "maxDepth":
+                print('Trying maxDepth=%s' % i)
+                seed = i
             else:
                 print("Variable to change is unrecognised, terminating experiment")
                 break
@@ -231,7 +238,9 @@ class Classifier:
             result = self.classifyBySKLRandomForest(noOfTrees=noOfTrees, maxFeaturesPerTree=maxFeaturesPerTree,
                                                     minDepth=minDepth, seed=seed, printProgress=False,
                                                     returnPredictions=returnPredictions,
-                                                    returnAccuracy=returnAccuracy, predictTest=False)
+                                                    returnAccuracy=returnAccuracy, predictTest=False,
+                                                    minSamplesSplit=minSamplesSplit, bootstrap=bootstrap,
+                                                    maxDepth=maxDepth)
             if printTime:
                 print('Took %.1f seconds.' % (time.time() - start))
             if printProgress:
@@ -260,9 +269,11 @@ class Classifier:
         return results
 
     def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minDepth=1, seed=0, printProgress=True,
-                                  returnAccuracy=True, returnPredictions=False, predictTest=True):
+                                  returnAccuracy=True, returnPredictions=False, predictTest=True, minSamplesSplit=2,
+                                  bootstrap=True, maxDepth=None):
         clf = RandomForestClassifier(n_estimators=noOfTrees, max_features=maxFeaturesPerTree,
-                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=minDepth)
+                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=minDepth,
+                                     min_samples_split=minSamplesSplit, bootstrap=bootstrap, max_depth=maxDepth)
         if printProgress:
             print("Generating forest...")
         clf.fit(self.trainX, self.trainY)
