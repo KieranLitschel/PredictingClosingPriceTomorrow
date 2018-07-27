@@ -88,12 +88,33 @@ To test this hypothesis I reran KNN for all features I had selected up to and in
 In previous experiments I increased the number of neighbours each time by 5, but for this experiment I increased the number by 10 each time so the graph isn't as smooth. But it is clear that with more neighbours we could achieve a higher accuracy, with no clear indication that the increase in accuracy is slowing down as the number of neighbours increases. However, it is worth noting that the increase in accuracy each time is not significant, so it is not clear by what margin KNN outperforms logistic regression. So the conclusion from this experiment is that KNN does not give a definitive answer whether the data is linearly seperable or not. Though considering the performance of logistic regression I think it is safe to assume the data is not linearly seperable. Hence I will now experiment with random forests as they are able to cope with non-linearly seperable data.
 
 ## Predicting using random forests
+### Experiment 1a - changing number of trees
 I will be using the implementation of random forests given in scikit learn as the version of TensorFlow I am using does not support random forests on windows. I first experimented with the number of trees, leaving all other parameters as default.
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201a.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
 
 The accuracy does not seem to plateu as quickly as we saw for KNN, with increase in accuracy being more gradual and not appearing to tail off. Despite this the time to generate the forests increases rapidly, with it taking 200 seconds for 70 trees, and 300 seconds for 100 trees. Consequently although 100 trees gives a better accuracy I have chosen 70 as the best value for the number of trees in this experiment, with no significant improvement in accuracy after this point.
 
-Next I adjusted max_features, which is the maximum number of features that can be considering in each tree, the default value was 4, but I tried all possible values (1 to 13).
+### Experiment 1b - 70 trees, changing maximum number of features
 
+Next I adjusted max_features, which is the maximum number of features that can be considering in each tree, the default value was 4, but I tried all possible values (1 to 13). 
 
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201b.png" alt="Random forests tuning the maximum number of features" style="width: 10px;"/>
+
+The results indicate the maximum number of features has little effect on accuracy, but it has a big effect on time, with it taking around 200 seconds to generate the tree and prediction for a maximum of 4 features which gives an accuracy of 31.9679%, and around 100 seconds to do the same with only 1 feature per tree which gives an accuracy of 31.8909%. Hence I will continue my experiments with 1 feature per tree for now.
+
+### Experiment 1c - 1 feature per tree, changing number of trees
+
+Now that generating the tree is much faster, I thought it was worth experimenting to see if I could get a higher accuracy with more trees.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201c.png" alt="Random forests 1 feature per tree, tuning the number of trees" style="width: 10px;"/>
+
+I decided 100 trees was the best compromise between accuracy and time, with it giving an accuracy of 32.0716%, an increase of almost 0.2%, whilst increase time to generate and predict by only 40 seconds.
+
+### Experiment 1d - 100 trees, 1 feature per tree, changing minSamplesLeaf
+
+minSamplesLeaf is the minimum number of samples to be at a leaf node. Increasing this should help reduce overfitting of the test set. 
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201d.png" alt="Random forests 100 trees, 1 feature per tree, changing minSamplesLeaf" style="width: 10px;"/>
+
+There is no clear trend with the graph, so it is harder to choose the best value. However a value of 50 gives the highest accuracy at 32.9638%, also reducing the time generate and predict to 105 seconds, considering this improvement I will choose a value of 50 for future experiments. 
