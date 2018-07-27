@@ -142,3 +142,8 @@ Experiment 2d - Tried 70 trees, a maximum of 3 features, and a value of 60 for m
 ### Experiment 1f
 
 I did not include the graph of this experiment in the progress log as I saw no improvement. This experiment was similair to 2d, fixing the number of trees to 100, 1 feature per tree, and a value of 50 for minSamplesLeaf, changing the value of minSamplesSplit. But I found no increase in performance from the default value of 2.
+
+### Experiment 3
+
+It seems like 32.9638% accuracy is the best I can achieve manually tuning the parameters. So I've decided to apply scikit learn's method for automatic hyperparameter selection called RandomizedSearchCV. I've chosen to start with tuning the number of trees between 1 and 100, the maximum number of features to consider at each split between 1 and 8, and the minimum minimum number of samples to be at a leaf node between 1 and 100, as these seem most likely to have the most impact on accuracy and from my experiments this range of values seems a good compromise between time to generate the tree and accuracy. I've also not investigated the effect of changing the criterion from gini to entropy, so I've decided to tune this as well. 
+
