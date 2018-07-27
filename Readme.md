@@ -97,7 +97,7 @@ The accuracy does not seem to plateu as quickly as we saw for KNN, with increase
 
 ### Experiment 1b - 70 trees, changing maximum number of features
 
-Next I adjusted max_features, which is the maximum number of features that can be considering in each tree, the default value was 4, but I tried all possible values (1 to 13). 
+Next I adjusted max_features, which is the maximum number of features that are considered at each split, the default value was 4, but I tried all possible values (1 to 13). 
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201b.png" alt="Random forests tuning the maximum number of features" style="width: 10px;"/>
 
@@ -117,11 +117,11 @@ minSamplesLeaf is the minimum number of samples to be at a leaf node. Increasing
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201d.png" alt="Random forests 100 trees, 1 feature per tree, changing minSamplesLeaf" style="width: 10px;"/>
 
-There is no clear trend with the graph, so it is harder to choose the best value. However a value of 50 gives the highest accuracy at 32.9638%, also reducing the time generate and predict to 105 seconds, considering this improvement I will choose a value of 50 for future experiments. 
+There is no clear trend with the graph, so it is harder to choose the best value. However a value of 50 gives the highest accuracy at 32.9638%, also reducing the time to generate and predict to 105 seconds, considering this improvement I will choose a value of 50 for future experiments. 
 
 ### Experiment 2a - 70 trees, changing minSamplesLeaf
 
-It seems odd to me that our best value for maximum number of features is 1, as this suggests features should be considering independantly, which does making too much sense considering a lot of them gather information from the same technical indicators. Considering this I have decided it is worth investigating optimising minSamplesLeaf before maximum number of features, and seeing how this impacts when we investigate maximum number of features. 
+It seems odd to me that our best value for maximum number of features is 1, as this suggests that it doesn't matter what features you use to split the data following each split, implying that features are independant of each other. Considering this I have decided it is worth investigating optimising minSamplesLeaf before maximum number of features, and seeing how this impacts when we investigate maximum number of features. 
 
 For this experiment I will be starting with 70 trees as this was the best found for trees without tuning any other hyperparameters.
 
@@ -145,5 +145,5 @@ I did not include the graph of this experiment in the progress log as I saw no i
 
 ### Experiment 3
 
-It seems like 32.9638% accuracy is the best I can achieve manually tuning the parameters. So I've decided to apply scikit learn's method for automatic hyperparameter selection called RandomizedSearchCV. I've chosen to start with tuning the number of trees between 1 and 100, the maximum number of features to consider at each split between 1 and 8, and the minimum minimum number of samples to be at a leaf node between 1 and 100, as these seem most likely to have the most impact on accuracy and from my experiments this range of values seems a good compromise between time to generate the tree and accuracy. I've also not investigated the effect of changing the criterion from gini to entropy, so I've decided to tune this as well. 
+It seems like 32.9638% accuracy is the best I can achieve manually tuning the parameters. So I've decided to apply scikit learn's method for automatic hyperparameter selection called RandomizedSearchCV. I've chosen to start with tuning the number of trees between 1 and 100, the maximum number of features to consider at each split between 1 and 8, and the minimum minimum number of samples to be at a leaf node between 1 and 100, as these seem most likely to have the most impact on accuracy and from my experiments this range of values seems a good compromise between time to generate the tree and accuracy. I've also not investigated the effect of changing the criterion from gini to entropy, so I've decided to tune this as well. I've also decided to use 10-fold cross-validation for evaluating each set of parameters and to start with will try 20 iterations. 
 
