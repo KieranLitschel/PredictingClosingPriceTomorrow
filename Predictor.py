@@ -33,8 +33,8 @@ def RandomSearchCVToCSV(RSCV):
             line += str(iteration.parameters[parameter]) + ","  # params
         for accs in iteration.cv_validation_scores:
             line += str(accs) + ","  # accs
-        line += str(iteration.mean_validation_score) + ","  # mean acc
         line += iteration.__str__().split(" std: ")[1].split(",")[0]  # std acc
+        line += str(iteration.mean_validation_score) + ","  # mean acc
         lines += line + "\n"
     with open('RSCVResults.csv', 'w') as f:
         f.write(lines)
