@@ -1,9 +1,9 @@
 # Table of Contents
-* [Introduction](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
-* [Progress Log](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
-⋅⋅⋅a. [Predicting using KNN](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-knn) ⋅⋅
-⋅⋅⋅b. [Predicting using logistic regression](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-logistic-regression) ⋅⋅
-⋅⋅⋅c. [Predicting using random forests](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests) ⋅⋅
+* [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
+* [**Progress Log**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
+  * [**Predicting using KNN**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-knn)
+  * [**Predicting using logistic regression**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-logistic-regression)
+  * [**Predicting using random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests)
 
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
