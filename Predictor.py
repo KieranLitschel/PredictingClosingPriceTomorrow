@@ -25,6 +25,22 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
     plt.show()
 
 
+def RandomSearchCVToCSV(RSCV):
+    lines = ""
+    for iteration in RSCV.grid_scores_:
+        line = ""
+        for parameter in iteration.parameters.keys():
+            line += str(iteration.parameters[parameter]) + ","  # params
+        for accs in iteration.cv_validation_scores:
+            line += str(accs) + ","  # accs
+        line += str(iteration.mean_validation_score) + ","  # mean acc
+        line += iteration.__str__().split(" std: ")[1].split(",")[0]  # std acc
+        lines += line + "\n"
+    with open('RSCVResults.csv', 'w') as f:
+        f.write(lines)
+        f.close()
+
+
 class Classifier:
     def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, coresToUse=6,
                  usePOfData=100):
@@ -207,7 +223,8 @@ class Classifier:
 
             return losses
 
-    def classifyBySKLRandomForestInRange(self, ks, change, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1, seed=0,
+    def classifyBySKLRandomForestInRange(self, ks, change, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1,
+                                         seed=0,
                                          minSamplesSplit=2, bootstrap=True, maxDepth=None, returnPredictions=False,
                                          returnAccuracy=True, printProgress=True, printTime=True, graphIt=True,
                                          graphTitle=""):
@@ -268,7 +285,8 @@ class Classifier:
                 plt.show()
         return results
 
-    def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1, seed=0, printProgress=True,
+    def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1, seed=0,
+                                  printProgress=True,
                                   returnAccuracy=True, returnPredictions=False, predictTest=True, minSamplesSplit=2,
                                   bootstrap=True, maxDepth=None):
         clf = RandomForestClassifier(n_estimators=noOfTrees, max_features=maxFeaturesPerTree,
