@@ -2,8 +2,17 @@
 * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
 * [**Progress Log**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
   * [**Predicting using KNN**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-knn)
+    * [**Results of adding SMAs**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-using-features-adjclosepchange-pdiffclose5sma-pdiffclose8sma-pdiffclose13sma)
+    * [**Results of adding RSI**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-feature-rsi)
+    * [**Results of adding Bollinger Bands**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-bollinger-band-features)
+    * [**Results of adding difference between SMAs**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-percentage-difference-between-smas)
+    * [**Results of adding MACD**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-macd)
+    * [**Results of adding Stochastic Oscilator**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-stochastic-oscillator)
+    * [**Results of adding ADX**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-adx)
   * [**Predicting using logistic regression**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-logistic-regression)
   * [**Predicting using random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests)
+    * [**Experiments 1 and 2: Adjusting hyperparameters manually**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-1a---changing-number-of-trees)
+    * [**Experiment 3: Adjusting hyperparameters using RandomizedSearchCV and GridSearchCV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-3a)
 
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
