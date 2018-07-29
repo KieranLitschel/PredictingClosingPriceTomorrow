@@ -150,7 +150,30 @@ Experiment 2d - Tried 70 trees, a maximum of 3 features, and a value of 60 for m
 
 I did not include the graph of this experiment in the progress log as I saw no improvement. This experiment was similair to 2d, fixing the number of trees to 100, 1 feature per tree, and a value of 50 for minSamplesLeaf, changing the value of minSamplesSplit. But I found no increase in performance from the default value of 2.
 
-### Experiment 3
+### Experiment 3a
 
 It seems like 32.9638% accuracy is the best I can achieve manually tuning the parameters. So I've decided to apply scikit learn's method for automatic hyperparameter selection called RandomizedSearchCV. I've chosen to start with tuning the number of trees between 1 and 100, the maximum number of features to consider at each split between 1 and 8, and the minimum number of samples to be at a leaf node between 1 and 100, as these seem most likely to have the most impact on accuracy and from my experiments this range of values seems a good compromise between time to generate the tree and accuracy. I've also not investigated the effect of changing the criterion from gini to entropy, so I've decided to tune this as well. To compromise between time and avoiding overfitting, I've decided to use 4-fold cross-validation for evaluating each set of hyperparameters.
+
+In the end I ended up evaluating 55 random settings from the range of hyperparameters. I've decided to evaluate the settings that gave the top 20 values for accuracy to narrow down my range for the hyperparameters.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020.PNG" alt="Top 20 results from experiment 3a" style="width: 10px;"/>
+
+I seperated min_samples_leaf and n_estimators into 10 bounds, and counted the number of times each hyperparameter occured in each bound in the top 20 accuracies, and weighted each bound by the ratio of the number of times it was sampled in the 55 random settings. The results are displayed in the following graphs.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020%20in%20Graphs.PNG" alt="Top 20 results from experiment 3a in graphs" style="width: 10px;"/>
+
+A higher score for a bound in relation to other bounds for each hyperparameter suggests it is more significant to accuracy. Considering this it appears that we can reduce the bounds to 50 to 100 estimators (trees), 3 to 6 features at each split, and the minimum number of samples to be at a leaf node to 50 to 100. We will use this range in experiment 3b.
+
+### Experiment 3b
+
+I conducted the next experiment with RanomizedSearchCV with the range of hyperparameters described above. I tried 25 random settings and also included the results from 3a that were in the range being investigated in the results table. This time I looked at the results with the top 5 accuracies.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205.PNG" alt="Top 5 results from experiment 3b" style="width: 10px;"/>
+
+The best accuracy found exceeded that discovered in 3a, suggesting that we are on the right track. I analysed the parameters for the top 5 settings using the same method as before.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3b in graphs" style="width: 10px;"/>
+
+The graphs suggest that the best set of hyperparameters have 90 to 100 estimators, require 90 to 100 samples to be at a leaf, and somewhere between 3 and 4 max features. Interestingly the pattern we saw with entropy being the best criterion has reversed, with it being outperformed by gini. Considering this, for my next experiment I will investigate the ranges described and limit the criterion to gini.
+
 
