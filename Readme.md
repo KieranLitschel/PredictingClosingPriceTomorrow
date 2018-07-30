@@ -13,6 +13,7 @@
   * [**Predicting using random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests)
     * [**Experiments 1 and 2: Adjusting hyperparameters manually**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-1a---changing-number-of-trees)
     * [**Experiment 3: Adjusting hyperparameters using RandomizedSearchCV and GridSearchCV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-3a)
+    * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
 
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
@@ -194,3 +195,23 @@ I conducted the next experiment with RanomizedSearchCV with the range of hyperpa
 I've included all the results and no graphs this time as now we are dealing with fewer parameters and settings it is easier to analyse by looking at. One thing that imediatly jumped out at me was the top 3 results, that were all in the same range, and all exceeded the best accuracies seen so far, despite their accuracies being cross validated unlike those from all other experiments. It does not necessarily mean that there are not better results attainable in the range, but in the interest of time it seems a good idea to put a final focus on investigating a range around these results. So I've decided than in my final experiment for random forests I'll conduct GridSearchCV over the range of 95 to 100 estimators and 95 to 100 minimum samples to be at a leaf. I'll fix the maximum number of feature to 3 and use the gini criterion.
 
 ### Experiment 3d
+
+Below are the top 5 results of the grid search.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203d%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3d in graphs" style="width: 10px;"/>
+
+Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c, so we shall use these hyper parameters as the final ones for our random forest.
+
+### Analysing the importance of each feature
+
+Having decided on the best hyper parameters for the random forest, I decided to investigate the importance the forest had assigned to each of the features.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Signifance%20of%20Features%20Based%20on%20RF%20Exp%203d.PNG" alt="Importance of features based on random forest from experiment 3c" style="width: 10px;"/>
+
+The results are somewhat surprising, with features relating to bollinger bands being far more significant than other features. Their significance does make sense though, with pDiff20SMAAbsBB capturing the squeeze of the bollinger bands which is indicative of volatility, and pDiffCloseUpperBB being the difference between upper bollinger band and the closing price, which can be indicative of a stock being overbought when closer to the upper band, which would point to a fall in price following shortly. The difference of the lower band from the closing price being less significant is somewhat confusing, but this may be because a lot of information can be gathered from the the upper band when the closing price is much smaller than it. 
+
+One thing that I struggled to decide when first implementing the technical indicators was the period for each of them to capture. All but RSI rely on an EMA's or SMA's, and the smaller periods these capture the more sensitive they are to change, and the larger the less sensitive they are. I decided to leave them at default values when I implemented them, but I decided it was worth seeing if there was any pattern between the period they captured and the significance of them to the forest.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Signifance%20of%20Features%20compared%20to%20period.PNG" alt="Comparison of feature significance to period length" style="width: 10px;"/>
+
+There seems like there might be some pattern, with the 6 most significant features having a period in the range of 10 to 20. Considering this I decided it was worth experimenting with the worst performing indicators, the stochastic oscilator and the MACD. I made a faster MACD, halving the period length of the slow and fast line to 6 and 13 periods respectively, and a slower stochastic oscilator, quadrupling the slow and fast period to 12 and 20 days respectively.
