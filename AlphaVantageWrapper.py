@@ -17,7 +17,10 @@ class AlphaVantage:
                 "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&apikey={1}".format(
                     ticker,
                     self.apiKey))
-        history = response.json().get('Time Series (Daily)')
+        try:
+            history = response.json().get('Time Series (Daily)')
+        except ValueError:
+            history = None
         return history
 
     def getDailyHistory(self, outputSize, ticker):
@@ -26,7 +29,7 @@ class AlphaVantage:
         # and try again
         while history is None:
             print('Last request failed. Retrying...')
-            time.sleep(10)
+            time.sleep(12)
             history = self.requestDailyHistory(outputSize, ticker)
             if not (history is None):
                 print('Request succeeded.')
