@@ -13,6 +13,7 @@
   * [**Predicting using random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests)
     * [**Experiments 1 and 2: Adjusting hyperparameters manually**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-1a---changing-number-of-trees)
     * [**Experiment 3: Adjusting hyperparameters using RandomizedSearchCV and GridSearchCV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-3a)
+    * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
 
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
