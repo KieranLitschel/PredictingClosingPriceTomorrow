@@ -26,7 +26,7 @@ class AlphaVantage:
         # and try again
         while history is None:
             print('Last request failed. Retrying...')
-            time.sleep(1.5)
+            time.sleep(10)
             history = self.requestDailyHistory(outputSize, ticker)
             if not (history is None):
                 print('Request succeeded.')
