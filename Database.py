@@ -50,8 +50,8 @@ class DBManager:
     def __init__(self, apiKey, pwrd):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,stochPKSlower,stochPDSlower,macdHistFaster,deltaMacdHistFaster) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 
     def insert(self, query, args, many=False):
         try:
@@ -281,7 +281,6 @@ class DBManager:
         noOfPoints = len(points)
         points = list(reversed(points))
         macdHistBefore = None
-        macdHistFasterBefore = None
         for i in range(0, noOfPoints):
             point = points[i]
             pointInHistory = history.get(point)
@@ -329,14 +328,8 @@ class DBManager:
                     deltaMacdHist = macdHist - macdHistBefore
                 else:
                     deltaMacdHist = None
-                _, _, macdHistFaster = fc.MACD(adjCloseHist, slow=6, fast=13)
-                if macdHistFasterBefore is not None and macdHistFaster is not None:
-                    deltaMacdHistFaster = macdHistFaster - macdHistFasterBefore
-                else:
-                    deltaMacdHistFaster = None
                 fc.updateHighLowClose(high, low, close)
                 stochPK, stochPD = fc.stochasticOscilator(fastKPeriod=5, slowKPeriod=3)
-                stochPKSlower, stochPDSlower = fc.stochasticOscilator(fastKPeriod=20, slowKPeriod=12)
                 pdi, ndi, adx = fc.ADX()
                 if pdi is None or ndi is None or ndi == 0:
                     pDiffPdiNdi = None
@@ -345,7 +338,7 @@ class DBManager:
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
-                       stochPD, adx, pDiffPdiNdi, stochPKSlower, stochPDSlower, macdHistFaster, deltaMacdHistFaster]
+                       stochPD, adx, pDiffPdiNdi]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -356,7 +349,6 @@ class DBManager:
                 args.append(tuple(arg))
                 adjCloseBefore = adjClose
                 macdHistBefore = macdHist
-                macdHistFasterBefore = macdHistFaster
         try:
             averageUpward = fc.averageUpward[-1]
             averageDownward = fc.averageDownward[-1]
@@ -398,7 +390,7 @@ class DBManager:
                         (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
-            time.sleep(10)  # Can only make ~5 request to the API per minute
+            time.sleep(12)  # Can only make ~5 request to the API per minute
             completed += 1
         query = self.insertAllTSDQuery
         if fieldsToRestore is not None:
@@ -508,7 +500,7 @@ class DBManager:
                     history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
                 points = list(history.keys())
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
-                time.sleep(10)  # Can only make ~5 request to the API per minute
+                time.sleep(12)  # Can only make ~5 request to the API per minute
             completed += 1
         if len(insertArgs) > 1:
             self.insert(self.insertAllTSDQuery, insertArgs, many=True)
