@@ -8,18 +8,21 @@ class AlphaVantage:
         self.apiKey = apiKey
 
     def requestDailyHistory(self, outputSize, ticker):
-        if outputSize == OutputSize.FULL:
-            response = requests.get(
-                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&outputsize=full&apikey={1}".format(
-                    ticker, self.apiKey))
-        else:
-            response = requests.get(
-                "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&apikey={1}".format(
-                    ticker,
-                    self.apiKey))
         try:
-            history = response.json().get('Time Series (Daily)')
-        except ValueError:
+            if outputSize == OutputSize.FULL:
+                response = requests.get(
+                    "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&outputsize=full&apikey={1}".format(
+                        ticker, self.apiKey))
+            else:
+                response = requests.get(
+                    "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={0}&apikey={1}".format(
+                        ticker,
+                        self.apiKey))
+            try:
+                history = response.json().get('Time Series (Daily)')
+            except ValueError:
+                history = None
+        except requests.exceptions.ConnectionError:
             history = None
         return history
 
