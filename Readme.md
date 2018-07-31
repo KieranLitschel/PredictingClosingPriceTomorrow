@@ -200,7 +200,15 @@ Below are the top 5 results of the grid search.
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203d%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3d in graphs" style="width: 10px;"/>
 
-Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c, so we shall use these hyper parameters as the final ones for our random forest.
+Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c.
+
+### Results of experiments 1, 2, and 3
+
+Below are the results of the best chosen hyper parameters from each of the three experiments.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%201%2C%202%2C%203%20results.PNG" alt="Results of experiments 1, 2, and 3" style="width: 10px;"/>
+
+Notie that accuracies differ slightly as I am using 4-fold cross validation, something I didn't do in experiments 1 and 2, and I suspect there's a slight difference in experiment 3 as I am using cross_val_score as opposed to GridCV, so I imagine folds are being allocated samples slightly differently. The hyper parameters chosen in experiment 3 perform the best, so we will use these as the final ones for our random forest.
 
 ### Analysing the importance of each feature
 
@@ -217,3 +225,6 @@ One thing that I struggled to decide when first implementing the technical indic
 There seems like there might be some pattern, with the 5 most significant features having a period in the range of 10 to 20. Considering this I decided it was worth experimenting with the worst performing indicators, the stochastic oscilator and the MACD. I made a faster MACD, halving the period length of the slow and fast line to 6 and 13 periods respectively, and a slower stochastic oscilator, quadrupling the slow and fast period to 12 and 20 days respectively.
 
 Unfortuantely this had little effect on accuracy, with replacing the old features with the new ones actually decreasing accuracy by 0.1%, and the significance of the new features only marginally differing only marginally from the originals. I did not try retuning the hyperparameters, but considering the change in significance being small it doesn't seem like there would be much of a change in accuracy even if I reoptimised the hyperparameters. Consequently I have concluded it is probably more to do with what the stochastic oscilator and MACD fundamentally behave that makes them less significant than other features, rather than them being less significant because they have different period lengths. Consequently I will revert to using the features with their original period lengths.
+
+## Adding more features
+### 
