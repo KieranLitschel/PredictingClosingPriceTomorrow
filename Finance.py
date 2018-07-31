@@ -3,7 +3,7 @@ import statistics
 
 class FinanceCalculator:
 
-    def __init__(self, seriesSoFar=None, rsiPeriod=14, emas=[12, 26]):
+    def __init__(self, seriesSoFar=None, rsiPeriod=14):
         self.upward = []
         self.averageUpward = []
         self.downward = []
@@ -13,11 +13,11 @@ class FinanceCalculator:
             for i in range(1, len(seriesSoFar) + 1):
                 self.RSI(seriesSoFar[0:i])
         self.lastEMA = {}
-        self.prevDifferences = []
+        self.prevDifferences = {}
         self.prevSignal = None
         self.highs = []
         self.lows = []
-        self.pKs = []
+        self.pKs = {}
         self.pdms = []
         self.ndms = []
         self.trs = []
@@ -109,14 +109,17 @@ class FinanceCalculator:
             ema = None
         return ema
 
-    def MACD(self, series):
-        if len(series) >= 26:
-            fastEMA = self.EMA(series, 12, "MACDfastEMA")
-            slowEMA = self.EMA(series, 26, "MACDslowEMA")
+    def MACD(self, series, slow, fast):
+        if self.prevDifferences.get(str(slow) + "," + str(fast)) is None:
+            self.prevDifferences[str(slow) + "," + str(fast)] = []
+        if len(series) >= fast:
+            fastEMA = self.EMA(series, slow, "MACDfastEMA" + str(slow) + "," + str(fast))
+            slowEMA = self.EMA(series, fast, "MACDslowEMA" + str(slow) + "," + str(fast))
             difference = fastEMA - slowEMA
-            self.prevDifferences.append(difference)
-            if len(self.prevDifferences) >= 9:
-                signal = self.EMA(self.prevDifferences, 9, "MACDsignal")
+            self.prevDifferences[str(slow) + "," + str(fast)].append(difference)
+            if len(self.prevDifferences[str(slow) + "," + str(fast)]) >= 9:
+                signal = self.EMA(self.prevDifferences[str(slow) + "," + str(fast)], 9,
+                                  "MACDsignal" + str(slow) + "," + str(fast))
                 histogram = difference - signal
             else:
                 signal = None
@@ -132,34 +135,36 @@ class FinanceCalculator:
         self.lows.append(low)
         self.closes.append(close)
 
-    def stochasticOscilator(self):
-        close = self.closes[-1]
-        fastKPeriod = 5
-        slowKPeriod = 3
+    def stochasticOscilator(self, fastKPeriod, slowKPeriod):
         if len(self.lows) >= fastKPeriod:
+            close = self.closes[-1]
             l5 = min(self.lows[len(self.lows) - fastKPeriod: len(self.lows)])
             h5 = max(self.highs[len(self.highs) - fastKPeriod: len(self.highs)])
-            if h5-l5!=0:
+            if h5 - l5 != 0:
+                if self.pKs.get(str(fastKPeriod) + "," + str(slowKPeriod)) is None:
+                    self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)] = []
                 pK = ((close - l5) / (h5 - l5)) * 100
-                self.pKs.append(pK)
-                if len(self.pKs) >= slowKPeriod:
-                    pD = sum(self.pKs[len(self.pKs) - slowKPeriod: len(self.pKs)]) / slowKPeriod
+                self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)].append(pK)
+                if len(self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)]) >= slowKPeriod:
+                    pD = sum(self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)][
+                             len(self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)]) - slowKPeriod: len(
+                                 self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)])]) / slowKPeriod
                 else:
                     pD = None
             else:
-                self.pKs=[]
-                pK=None
-                pD=None
+                self.pKs[str(fastKPeriod) + "," + str(slowKPeriod)] = []
+                pK = None
+                pD = None
         else:
             pK = None
             pD = None
         return pK, pD
 
     def ADX(self):
-        pdi=None
-        ndi=None
-        adx=None
-        if len(self.closes)>=2:
+        pdi = None
+        ndi = None
+        adx = None
+        if len(self.closes) >= 2:
             self.trs.append(max(self.highs[-1] - self.lows[-1], abs(self.highs[-1] - self.closes[-2]),
                                 abs(self.lows[-1] - self.closes[-2])))
             moveUp = self.highs[-1] - self.highs[-2]
@@ -182,5 +187,5 @@ class FinanceCalculator:
                 ndi = 100 * (ndmEMA / atr)
                 self.pdisMinusNdis.append(abs(pdi - ndi))
                 if len(self.pdisMinusNdis) >= 14:
-                    adx = 100 * self.EMA(self.pdisMinusNdis,14) / (pdi + ndi)
-        return pdi,ndi,adx
+                    adx = 100 * self.EMA(self.pdisMinusNdis, 14) / (pdi + ndi)
+        return pdi, ndi, adx
