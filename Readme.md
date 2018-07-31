@@ -15,7 +15,9 @@
     * [**Experiment 3: Adjusting hyperparameters using RandomizedSearchCV and GridSearchCV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-3a)
     * [**Results of experiments 1, 2, and 3**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-experiments-1-2-and-3)
     * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
-
+    * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
+  * [**Ading more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
+    * [**Results of adding on-balance volume**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#effect-of-adding-on-balance-volume)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -227,7 +229,7 @@ There seems like there might be some pattern, with the 5 most significant featur
 
 Unfortuantely this had little effect on accuracy, with replacing the old features with the new ones actually decreasing accuracy by 0.1%, and the significance of the new features only marginally differing only marginally from the originals. I did not try retuning the hyperparameters, but considering the change in significance being small it doesn't seem like there would be much of a change in accuracy even if I reoptimised the hyperparameters. Consequently I have concluded it is probably more to do with what the stochastic oscilator and MACD fundamentally behave that makes them less significant than other features, rather than them being less significant because they have different period lengths. Consequently I will revert to using the features with their original period lengths.
 
-### Conclusion
+### Conclusions drawn from experimenting with random forests
 
 The random forest classifier was an improvement over KNN as it drastically reduced prediction time, with the model being pregenerated, but disappointingly we only saw around a 0.6% increase in accuracy. It seems that the model is dominated by bollinger bands, with the other features contributing little in comparison. We would have expected to see an increase in accuracy by considering more features at each split, but we didn't, with considering less features than default at each split performing best. Considering all of this, it seems that the best course of action is to add more features, which I plan to do next.
 
