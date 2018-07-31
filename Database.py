@@ -486,7 +486,8 @@ class DBManager:
     def updateStocks(self, tickersNLastUpdated):
         print(
             "WARNING: Some features rely on past calculation (e.g. those based on EMAs) and do not update well, "
-            "consider readding the stocks instead using the inbuilt methgods to ensure values for features are consistent")
+            "consider readding the stocks instead using the inbuilt methgods as this will take the same amount of time "
+            "whilst ensuring values for features are consistent.")
         insertArgs = []
         updateArgs = []
         completed = 0
