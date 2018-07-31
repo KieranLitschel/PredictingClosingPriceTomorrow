@@ -323,7 +323,7 @@ class DBManager:
                 pDiff5SMA8SMA = pDiffSMAs[0]
                 pDiff5SMA13SMA = pDiffSMAs[1]
                 pDiff8SMA13SMA = pDiffSMAs[2]
-                _, _, macdHist = fc.MACD(adjCloseHist,slow=12,fast=26)
+                _, _, macdHist = fc.MACD(adjCloseHist, slow=12, fast=26)
                 if macdHistBefore is not None and macdHist is not None:
                     deltaMacdHist = macdHist - macdHistBefore
                 else:
@@ -484,6 +484,9 @@ class DBManager:
         print('All stocks updated')
 
     def updateStocks(self, tickersNLastUpdated):
+        print(
+            "WARNING: Some features rely on past calculation (e.g. those based on EMAs) and do not update well, "
+            "consider readding the stocks instead using the inbuilt methgods to ensure values for features are consistent")
         insertArgs = []
         updateArgs = []
         completed = 0
