@@ -272,7 +272,7 @@ class DBManager:
             closes = self.select(query, (ticker, lastUpdated, maxPeriod))
             for close in reversed(closes):
                 adjCloseHist.append(close[0])
-            fc = Finance.FinanceCalculator(seriesSoFar=adjCloseHist[0:14],n_jobs=self.jobs)
+            fc = Finance.FinanceCalculator(seriesSoFar=adjCloseHist[0:14], n_jobs=self.jobs)
             result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s", (ticker,))
             fc.averageUpward.append(result[0][0])
             fc.averageDownward.append(result[0][1])
@@ -388,13 +388,16 @@ class DBManager:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
             lastUpdated = datetime.date.today()
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
+            start = time.time()
             points = list(history.keys())
             firstDay = pointToDate(points[-1])
             self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
                         (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
-            time.sleep(12)  # Can only make ~5 request to the API per minute
+            passed = time.time() - start
+            if passed < 12:
+                time.sleep(12 - passed)  # Can only make ~5 request to the API per minute
             completed += 1
         query = self.insertAllTSDQuery
         if fieldsToRestore is not None:
@@ -506,9 +509,12 @@ class DBManager:
                     history = self.av.getDailyHistory(AVW.OutputSize.COMPACT, ticker)
                 else:
                     history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
+                start = time.time()
                 points = list(history.keys())
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
-                time.sleep(12)  # Can only make ~5 request to the API per minute
+                passed = time.time() - start
+                if passed < 12:
+                    time.sleep(12 - passed)  # Can only make ~5 request to the API per minute
             completed += 1
         if len(insertArgs) > 1:
             self.insert(self.insertAllTSDQuery, insertArgs, many=True)
