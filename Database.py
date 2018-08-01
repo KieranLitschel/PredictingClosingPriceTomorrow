@@ -394,8 +394,8 @@ class DBManager:
         for (ticker, sector) in tickersNSectors:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
             lastUpdated = datetime.date.today()
-            history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             start = time.time()
+            history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
             firstDay = pointToDate(points[-1])
             self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
@@ -512,11 +512,11 @@ class DBManager:
                 # started at 11:59pm one night and continues into the next day
                 today = datetime.date.today()
                 updateArgs.append((today, ticker))
+                start = time.time()
                 if (today - lastUpdated).days > 100:
                     history = self.av.getDailyHistory(AVW.OutputSize.COMPACT, ticker)
                 else:
                     history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
-                start = time.time()
                 points = list(history.keys())
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
                 passed = time.time() - start
