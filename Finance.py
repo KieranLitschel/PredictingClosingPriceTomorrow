@@ -1,11 +1,12 @@
 import statistics
 import numpy as np
 from sklearn import linear_model
+import multiprocessing
 
 
 class FinanceCalculator:
 
-    def __init__(self, seriesSoFar=None, rsiPeriod=14, n_jobs=6):
+    def __init__(self, seriesSoFar=None, rsiPeriod=14, n_jobs=None):
         self.upward = []
         self.averageUpward = []
         self.downward = []
@@ -27,7 +28,13 @@ class FinanceCalculator:
         self.pdisMinusNdis = []
         self.obvs = {}
         self.adjCloses = []
-        self.jobs = n_jobs
+        if n_jobs is None:
+            if multiprocessing.cpu_count() - 2 > 0:
+                self.jobs = multiprocessing.cpu_count() - 2
+            else:
+                self.jobs = 1
+        else:
+            self.jobs = n_jobs
 
     def reset(self):
         self.__init__()

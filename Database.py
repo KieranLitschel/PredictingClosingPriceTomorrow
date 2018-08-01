@@ -10,6 +10,7 @@ import math
 import numpy as np
 import pickle
 import Finance
+import multiprocessing
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -47,12 +48,18 @@ def addFieldsToInsertQuery(query, fields):
 
 
 class DBManager:
-    def __init__(self, apiKey, pwrd, n_jobs=6):
+    def __init__(self, apiKey, pwrd, n_jobs=None):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
         self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvPrediction5,obvPrediction8,obvPrediction13) " \
                                  "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        self.jobs = n_jobs
+        if n_jobs is None:
+            if multiprocessing.cpu_count() - 2 > 0:
+                self.jobs = multiprocessing.cpu_count() - 2
+            else:
+                self.jobs = 1
+        else:
+            self.jobs = n_jobs
 
     def insert(self, query, args, many=False):
         try:
