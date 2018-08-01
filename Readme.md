@@ -13,8 +13,11 @@
   * [**Predicting using random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-random-forests)
     * [**Experiments 1 and 2: Adjusting hyperparameters manually**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-1a---changing-number-of-trees)
     * [**Experiment 3: Adjusting hyperparameters using RandomizedSearchCV and GridSearchCV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#experiment-3a)
+    * [**Results of experiments 1, 2, and 3**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-experiments-1-2-and-3)
     * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
-
+    * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
+  * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
+    * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#effect-of-adding-on-balance-volume)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -200,7 +203,15 @@ Below are the top 5 results of the grid search.
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203d%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3d in graphs" style="width: 10px;"/>
 
-Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c, so we shall use these hyper parameters as the final ones for our random forest.
+Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c.
+
+### Results of experiments 1, 2, and 3
+
+Below are the results of the best chosen hyper parameters from each of the three experiments.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%201%2C%202%2C%203%20results.PNG" alt="Results of experiments 1, 2, and 3" style="width: 10px;"/>
+
+Notie that accuracies differ slightly as I am using 4-fold cross validation, something I didn't do in experiments 1 and 2, and I suspect there's a slight difference in experiment 3 as I am using cross_val_score as opposed to GridCV, so I imagine folds are being allocated samples slightly differently. The hyper parameters chosen in experiment 3 perform the best, so we will use these as the final ones for our random forest.
 
 ### Analysing the importance of each feature
 
@@ -217,3 +228,15 @@ One thing that I struggled to decide when first implementing the technical indic
 There seems like there might be some pattern, with the 5 most significant features having a period in the range of 10 to 20. Considering this I decided it was worth experimenting with the worst performing indicators, the stochastic oscilator and the MACD. I made a faster MACD, halving the period length of the slow and fast line to 6 and 13 periods respectively, and a slower stochastic oscilator, quadrupling the slow and fast period to 12 and 20 days respectively.
 
 Unfortuantely this had little effect on accuracy, with replacing the old features with the new ones actually decreasing accuracy by 0.1%, and the significance of the new features only marginally differing only marginally from the originals. I did not try retuning the hyperparameters, but considering the change in significance being small it doesn't seem like there would be much of a change in accuracy even if I reoptimised the hyperparameters. Consequently I have concluded it is probably more to do with what the stochastic oscilator and MACD fundamentally behave that makes them less significant than other features, rather than them being less significant because they have different period lengths. Consequently I will revert to using the features with their original period lengths.
+
+### Conclusions drawn from experimenting with random forests
+
+The random forest classifier was an improvement over KNN as it drastically reduced prediction time, with the model being pregenerated, but disappointingly we only saw around a 0.6% increase in accuracy. It seems that the model is dominated by bollinger bands, with the other features contributing little in comparison. We would have expected to see an increase in accuracy by considering more features at each split, but we didn't, with considering less features than default at each split performing best. Considering all of this, it seems that the best course of action is to add more features, which I plan to do next.
+
+## Adding more features
+
+### Results of adding OBV
+
+
+
+
