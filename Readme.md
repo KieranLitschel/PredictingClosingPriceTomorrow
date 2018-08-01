@@ -17,7 +17,7 @@
     * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
     * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
   * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
-    * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#effect-of-adding-on-balance-volume)
+    * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
