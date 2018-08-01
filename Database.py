@@ -47,11 +47,12 @@ def addFieldsToInsertQuery(query, fields):
 
 
 class DBManager:
-    def __init__(self, apiKey, pwrd):
+    def __init__(self, apiKey, pwrd, n_jobs=6):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvPrediction5,obvPrediction8,obvPrediction13) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.jobs = n_jobs
 
     def insert(self, query, args, many=False):
         try:
@@ -271,12 +272,12 @@ class DBManager:
             closes = self.select(query, (ticker, lastUpdated, maxPeriod))
             for close in reversed(closes):
                 adjCloseHist.append(close[0])
-            fc = Finance.FinanceCalculator(seriesSoFar=adjCloseHist[0:14])
+            fc = Finance.FinanceCalculator(seriesSoFar=adjCloseHist[0:14],n_jobs=self.jobs)
             result = self.select("SELECT averageUpward,averageDownward FROM tickers WHERE ticker = %s", (ticker,))
             fc.averageUpward.append(result[0][0])
             fc.averageDownward.append(result[0][1])
         else:
-            fc = Finance.FinanceCalculator()
+            fc = Finance.FinanceCalculator(n_jobs=self.jobs)
         first = True
         noOfPoints = len(points)
         points = list(reversed(points))
@@ -328,17 +329,20 @@ class DBManager:
                     deltaMacdHist = macdHist - macdHistBefore
                 else:
                     deltaMacdHist = None
-                fc.updateHighLowClose(high, low, close)
+                fc.updateHighLowClose(high, low, close, adjClose)
                 stochPK, stochPD = fc.stochasticOscilator(fastKPeriod=5, slowKPeriod=3)
                 pdi, ndi, adx = fc.ADX()
                 if pdi is None or ndi is None or ndi == 0:
                     pDiffPdiNdi = None
                 else:
                     pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
+                obvPrediction5 = fc.OBVFeatures(volume, 5)
+                obvPrediction8 = fc.OBVFeatures(volume, 8)
+                obvPrediction13 = fc.OBVFeatures(volume, 13)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
-                       stochPD, adx, pDiffPdiNdi]
+                       stochPD, adx, pDiffPdiNdi, obvPrediction5, obvPrediction8, obvPrediction13]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
