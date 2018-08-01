@@ -1,9 +1,11 @@
 import statistics
+import numpy as np
+from sklearn import linear_model
 
 
 class FinanceCalculator:
 
-    def __init__(self, seriesSoFar=None, rsiPeriod=14):
+    def __init__(self, seriesSoFar=None, rsiPeriod=14, n_jobs=6):
         self.upward = []
         self.averageUpward = []
         self.downward = []
@@ -23,6 +25,9 @@ class FinanceCalculator:
         self.trs = []
         self.closes = []
         self.pdisMinusNdis = []
+        self.obvs = {}
+        self.adjCloses = []
+        self.jobs = n_jobs
 
     def reset(self):
         self.__init__()
@@ -110,16 +115,16 @@ class FinanceCalculator:
         return ema
 
     def MACD(self, series, slow, fast):
-        if self.prevDifferences.get(str(slow) + "," + str(fast)) is None:
-            self.prevDifferences[str(slow) + "," + str(fast)] = []
+        name = str(slow) + "," + str(fast)
+        if self.prevDifferences.get(name) is None:
+            self.prevDifferences[name] = []
         if len(series) >= fast:
-            fastEMA = self.EMA(series, slow, "MACDfastEMA" + str(slow) + "," + str(fast))
-            slowEMA = self.EMA(series, fast, "MACDslowEMA" + str(slow) + "," + str(fast))
+            fastEMA = self.EMA(series, slow, "MACDfastEMA" + name)
+            slowEMA = self.EMA(series, fast, "MACDslowEMA" + name)
             difference = fastEMA - slowEMA
-            self.prevDifferences[str(slow) + "," + str(fast)].append(difference)
-            if len(self.prevDifferences[str(slow) + "," + str(fast)]) >= 9:
-                signal = self.EMA(self.prevDifferences[str(slow) + "," + str(fast)], 9,
-                                  "MACDsignal" + str(slow) + "," + str(fast))
+            self.prevDifferences[name].append(difference)
+            if len(self.prevDifferences[name]) >= 9:
+                signal = self.EMA(self.prevDifferences[name], 9, "MACDsignal" + name)
                 histogram = difference - signal
             else:
                 signal = None
@@ -130,10 +135,11 @@ class FinanceCalculator:
             histogram = None
         return difference, signal, histogram
 
-    def updateHighLowClose(self, high, low, close):
+    def updateHighLowClose(self, high, low, close, adjClose):
         self.highs.append(high)
         self.lows.append(low)
         self.closes.append(close)
+        self.adjCloses.append(adjClose)
 
     def stochasticOscilator(self, fastKPeriod, slowKPeriod):
         if len(self.lows) >= fastKPeriod:
@@ -189,3 +195,47 @@ class FinanceCalculator:
                 if len(self.pdisMinusNdis) >= 14:
                     adx = 100 * self.EMA(self.pdisMinusNdis, 14) / (pdi + ndi)
         return pdi, ndi, adx
+
+    # I recommend looking at the readme section on it (Results of adding OBV) for a thorough explanation of what this is doing
+    def OBVFeatures(self, volume, period, threshold=0.05):
+        if self.obvs.get(period) is None:
+            self.obvs[period] = [0]
+        if len(self.adjCloses) >= 2:
+            adjClosePChange = ((self.adjCloses[-1] - self.adjCloses[-2]) / self.adjCloses[-2]) * 100
+        else:
+            return None
+        if adjClosePChange > 0:
+            obv = self.obvs[period][-1] + volume
+        elif adjClosePChange < 0:
+            obv = self.obvs[period][-1] - volume
+        elif adjClosePChange == 0:
+            obv = self.obvs[period][-1]
+        self.obvs[period].append(obv)
+        obvsPrediction = None
+        if len(self.obvs[period]) > period:
+            OBVSample = self.obvs[period][len(self.obvs[period]) - period: len(self.obvs[period])]
+            denominator = 0
+            for i in OBVSample:
+                denominator += abs(i)
+            denominator = denominator / period
+            OBVSample = np.array(OBVSample)
+            x = np.arange(1, period + 1).reshape(period, 1)
+            regr = linear_model.LinearRegression(n_jobs=self.jobs)
+            regr.fit(x, OBVSample)
+            OBVGrad = regr.coef_[0]
+            OBVGradRatio = abs(OBVGrad) / denominator
+            flat = False
+            if OBVGradRatio <= threshold:
+                flat = True
+            adjCloseSample = np.array(self.adjCloses[len(self.adjCloses) - period: len(self.adjCloses)])
+            regr.fit(x, adjCloseSample)
+            adjCloseGrad = regr.coef_[0]
+            if adjCloseGrad < 0 and OBVGrad < 0 and not flat:
+                obvsPrediction = 0
+            elif adjCloseGrad > 0 and (OBVGrad < 0 or flat):
+                obvsPrediction = 1
+            elif adjCloseGrad < 0 and (OBVGrad > 0 or flat):
+                obvsPrediction = 2
+            elif adjCloseGrad > 0 and OBVGrad > 0 and not flat:
+                obvsPrediction = 3
+        return obvsPrediction
