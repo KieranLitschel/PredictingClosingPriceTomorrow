@@ -223,7 +223,10 @@ class FinanceCalculator:
             regr = linear_model.LinearRegression(n_jobs=self.jobs)
             regr.fit(x, OBVSample)
             OBVGrad = regr.coef_[0]
-            OBVGradRatio = abs(OBVGrad) / denominator
+            if denominator != 0:
+                OBVGradRatio = abs(OBVGrad) / denominator
+            else:
+                return None
             flat = False
             if OBVGradRatio <= threshold:
                 flat = True
