@@ -17,7 +17,7 @@
     * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
     * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
   * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
-    * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#effect-of-adding-on-balance-volume)
+    * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -251,7 +251,7 @@ Using all of the above I will assign each sample into one of four categories:
 
 * Price continues to fall - If the price trends down, the OBV trends down, and the OBV gradient is not flat, then this suggests the price will continue to fall, so we assign it a value of 0
 * Bearish divergence - If the price is trending up, but OBV is down or the OBV gradient is flat, then this suggests bearish divergence, so we expect prices will start to fall, and we assign it a value of 1
-* Bullish divergence - If the price is trending down, but OBV is trending up or the OBV gradient is flat, the this suggests bullish divergence, so we expect prices will start to rise, and we assign it a value of 2
+* Bullish divergence - If the price is trending down, but OBV is trending up or the OBV gradient is flat, then this suggests bullish divergence, so we expect prices will start to rise, and we assign it a value of 2
 * Prices continue to rise - If the price trends up, the OBV trends up, and the OBV gradient is not flat, then this suggests prices will continue to rise, so we assign it a value of 3
 
-
+I am not certain what value of n will perform best, so I've decided to add features for n = 5, 8, and 13, as these values performed well with the SMAs.
