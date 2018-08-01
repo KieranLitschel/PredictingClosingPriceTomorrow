@@ -237,6 +237,21 @@ The random forest classifier was an improvement over KNN as it drastically reduc
 
 ### Results of adding OBV
 
+The complexity with OBV (on-balance volume, [see here](https://traderhq.com/trading-indicators/understanding-on-balance-volume-and-how-to-use-it/)) is that the important thing is not it's value, but the trend in movement considering the trend in movement of price. I've decided the best way to capture this is by estimating the line of best fit through the OBV and also the prices using linear regression, and taking the estimated gradients to estimate the trend of each.
 
+It is not useful to compare these gradients directly, particularly as they will vary greatly depending on the time period examined. For example the volume traded of Microsoft around the tech bubble in the 2000's is much higher than the volume traded today, so the rate of change in volume traded is much higher around the 2000's too. Also we can't even compare the rate of change of different stocks around the same time period, as for example members of the FTSE 100 will have a much higher volume traded than members of the FTSE 250, so we run into the same problem. It may be worth investigating in future standardizing each stocks rate of change of volume determining the standard deviation and mean using a fixed number of periods in the past, but I am uncertain of how effective this would be, so I will leave it for now.
+
+So instead of comparing gradients directly I will compare the rate of change of OBV and rate of change of adjusted closing price for each sample, using a fixed number of period prior to each sample to estimate the rates of change. It is important to be able to determine when the rate of change is flat, I will do this by dividing absolute value of the OBV gradient by the the average of the absolute values of the OBV in the period it was selected from, if this value is less than or equal to 0.05 (chosen by hand) I will consider the OBV gradient flat.
+
+I have also formalised the information in the last paragraph into mathematics to make it clearer.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Maths/OBV%20supporting%20equations.PNG" alt="Equations that support OBV formalised into maths" style="width: 10px;"/>
+
+Using all of the above I will assign each sample into one of four categories:
+
+* Price continues to fall - If the price trends down, the OBV trends down, and the OBV gradient is not flat, then this suggests the price will continue to fall, so we assign it a value of 0
+* Bearish divergence - If the price is trending up, but OBV is down or the OBV gradient is flat, then this suggests bearish divergence, so we expect prices will start to fall, and we assign it a value of 1
+* Bullish divergence - If the price is trending down, but OBV is trending up or the OBV gradient is flat, the this suggests bullish divergence, so we expect prices will start to rise, and we assign it a value of 2
+* Prices continue to rise - If the price trends up, the OBV trends up, and the OBV gradient is not flat, then this suggests prices will continue to rise, so we assign it a value of 3
 
 
