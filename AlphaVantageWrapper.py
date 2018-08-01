@@ -22,7 +22,7 @@ class AlphaVantage:
                 history = response.json().get('Time Series (Daily)')
             except ValueError:
                 history = None
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.RequestException:
             history = None
         return history
 
