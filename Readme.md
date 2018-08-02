@@ -255,3 +255,7 @@ Using all of the above I will assign each sample into one of four categories:
 * Prices continue to rise - If the price trends up, the OBV trends up, and the OBV gradient is not flat, then this suggests prices will continue to rise, so we assign it a value of 3
 
 I am not certain what value of n will perform best, so I've decided to add features for n = 5, 8, and 13, as these values performed well with the SMAs.
+
+Disappointingly using training a random forest with our best features and testing using 4 fold cross validation with the new features and all the previous ones, accuracy only increased by around 0.01% and standard deviation increased by 0.02%. The significance assigned to each feature suggests to us the issue is not the hyperparameters, with the new features each being assigned a significance of around 1/15th of the previous least significant features.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20OBV%20Predictors.PNG" alt="Bar chart of adding OBV related featuressignificance of features" style="width: 10px;"/>
