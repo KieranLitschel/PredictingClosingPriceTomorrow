@@ -391,10 +391,10 @@ class DBManager:
     def addManyNewStocks(self, tickersNSectors, fieldsToRestore=None, columnNames=[]):
         completed = 0
         timeseriesArgs = []
+        start = time.time()
         for (ticker, sector) in tickersNSectors:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
             lastUpdated = datetime.date.today()
-            start = time.time()
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
             firstDay = pointToDate(points[-1])
@@ -402,10 +402,12 @@ class DBManager:
                         (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
-            passed = time.time() - start
-            if passed < 12:
-                time.sleep(12 - passed)  # Can only make ~5 request to the API per minute
             completed += 1
+            if completed != 0 and completed % 5 == 0:
+                passed = time.time() - start
+                if passed < 60:
+                    time.sleep(60 - passed)  # Can only make ~5 request to the API per minute
+                start = time.time()
         query = self.insertAllTSDQuery
         if fieldsToRestore is not None:
             query = addFieldsToInsertQuery(query, columnNames)
@@ -505,6 +507,8 @@ class DBManager:
         insertArgs = []
         updateArgs = []
         completed = 0
+        fetched = 0
+        start = time.time()
         for (ticker, lastUpdated) in tickersNLastUpdated:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNLastUpdated)))
             if (lastUpdated - datetime.date.today()).days != 0:
@@ -512,16 +516,18 @@ class DBManager:
                 # started at 11:59pm one night and continues into the next day
                 today = datetime.date.today()
                 updateArgs.append((today, ticker))
-                start = time.time()
                 if (today - lastUpdated).days > 100:
                     history = self.av.getDailyHistory(AVW.OutputSize.COMPACT, ticker)
                 else:
                     history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
                 points = list(history.keys())
                 self.timeseriesToArgs(ticker, points, history, insertArgs, lastUpdated)
+                fetched += 1
+            if fetched != 0 and fetched % 5 == 0:
                 passed = time.time() - start
-                if passed < 12:
-                    time.sleep(12 - passed)  # Can only make ~5 request to the API per minute
+                if passed < 60:
+                    time.sleep(60 - passed)  # Can only make ~5 request to the API per minute
+                start = time.time()
             completed += 1
         if len(insertArgs) > 1:
             self.insert(self.insertAllTSDQuery, insertArgs, many=True)
