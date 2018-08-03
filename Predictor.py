@@ -333,7 +333,7 @@ class Classifier:
         acc = np.mean(scores)
         std = np.std(scores)
         print("Finding feature importances...")
-        rfc.n_jobs=self.coresToUse
+        rfc.n_jobs = self.coresToUse
         rfc.fit(self.trainX, self.trainY)
         featureImportances = rfc.feature_importances_
         return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
