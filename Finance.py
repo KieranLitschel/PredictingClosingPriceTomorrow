@@ -204,7 +204,7 @@ class FinanceCalculator:
         return pdi, ndi, adx
 
     # I recommend looking at the readme section on it (Results of adding OBV) for a thorough explanation of what this is doing
-    def OBVFeatures(self, volume, period, threshold=0.05):
+    def OBVFeatures(self, volume, period, threshold=0.01):
         if self.obvs.get(period) is None:
             self.obvs[period] = [0]
         if len(self.adjCloses) >= 2:
