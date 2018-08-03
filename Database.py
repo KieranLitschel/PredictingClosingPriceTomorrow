@@ -75,15 +75,18 @@ class DBManager:
                     for i in range(100000, len(args), 100000):
                         print('Inserting %s to %s' % (i - 100000, i))
                         cursor.executemany(query, args[i - 100000: i])
+                        conn.commit()
                         batchNo += 1
                     if i < len(args) - 1:
                         print('Inserting %s to %s' % (i, len(args)))
                         cursor.executemany(query, args[i: len(args)])
+                        conn.commit()
                 else:
                     cursor.executemany(query, args)
+                    conn.commit()
             else:
                 cursor.execute(query, args)
-            conn.commit()
+                conn.commit()
         except Error as e:
             print(e)
         finally:
@@ -370,10 +373,13 @@ class DBManager:
         except IndexError:
             pass
 
-    def addNewStock(self, ticker, sector, fieldsToRestore=None, columnNames=[]):
-        lastUpdated = datetime.date.today()
+    def addNewStock(self, ticker, sector, fieldsToRestore=None, readdFromMemory=False, columnNames=[]):
         history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
         points = list(history.keys())
+        if readdFromMemory:
+            lastUpdated = pointToDate(points[0])
+        else:
+            lastUpdated = datetime.date.today()
         firstDay = pointToDate(points[-1])
         query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
                 "VALUES(%s,%s,DATE(%s),DATE(%s))"
@@ -388,22 +394,25 @@ class DBManager:
         self.insert(query, args, many=True)
         print('Stock added successfully')
 
-    def addManyNewStocks(self, tickersNSectors, fieldsToRestore=None, columnNames=[]):
+    def addManyNewStocks(self, tickersNSectors, readdFromMemory=False, fieldsToRestore=None, columnNames=[]):
         completed = 0
         timeseriesArgs = []
         start = time.time()
         for (ticker, sector) in tickersNSectors:
             print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
-            lastUpdated = datetime.date.today()
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
+            if readdFromMemory:
+                lastUpdated = pointToDate(points[0])
+            else:
+                lastUpdated = datetime.date.today()
             firstDay = pointToDate(points[-1])
             self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
                         (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
             completed += 1
-            if completed != 0 and completed % 5 == 0:
+            if completed != 0 and completed % 5 == 0 and readdFromMemory is False:
                 passed = time.time() - start
                 if passed < 60:
                     time.sleep(60 - passed)  # Can only make ~5 request to the API per minute
@@ -411,6 +420,8 @@ class DBManager:
         query = self.insertAllTSDQuery
         if fieldsToRestore is not None:
             query = addFieldsToInsertQuery(query, columnNames)
+        if readdFromMemory:
+            self.av.localBackup = None # We do not need the local back up anymore, so we free up the memory
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
@@ -442,18 +453,60 @@ class DBManager:
         self.insert(query, args, many=True)
         print("Readded all columns")
 
-    def readdAllStocks(self, columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+    # Make a backup of what we'd usually fetch from the API into memory of av, remember to set the local backup in av to
+    # none when done
+    def makeLocalBackup(self, storedOnDisk, ticker=None):
+        if storedOnDisk is False:
+            print("Getting price history from the database...")
+            if ticker is None:
+                query = "SELECT ticker,date,open,high,low,close,adjClose,volume FROM timeseriesdaily ORDER BY date DESC"
+                result = self.select(query, ())
+            else:
+                query = "SELECT ticker,date,open,high,low,close,adjClose,volume FROM timeseriesdaily WHERE ticker=%s ORDER BY date DESC"
+                result = self.select(query, (ticker,))
+            priceHistory = {}
+            print("Indexing price history...")
+            for row in result:
+                ticker = row[0]
+                date = str(row[1])
+                opn = str(row[2])
+                high = str(row[3])
+                low = str(row[4])
+                close = str(row[5])
+                adjClose = str(row[6])
+                volume = str(row[7])
+                if priceHistory.get(ticker) is None:
+                    priceHistory[ticker] = {}
+                priceHistory[ticker][date] = {'1. open': opn, '2. high': high, '3. low': low, '4. close': close,
+                                              '5. adjusted close': adjClose, '6. volume': volume}
+            # back it up to disk in case there is an exception when re-adding the prices
+            print('Saving backup of price history...')
+            with open('priceHistory.pickle', 'wb') as handle:
+                pickle.dump(priceHistory, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            print("Getting price history from disk...")
+            with open('priceHistory.pickle', 'rb') as handle:
+                priceHistory = pickle.load(handle)
+        self.av.localBackup = priceHistory
+
+    def readdAllStocks(self, readdFromMemory=True, storedOnDisk=False,
+                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+        # Save a record of tickers and their sectors in case theres an exception when readding the stock
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
         with open('tickersNSectors.pickle', 'wb') as handle:
             pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        if readdFromMemory:
+            self.makeLocalBackup(storedOnDisk=storedOnDisk)
+        print('Getting data to save to disk...')
+        # Get all the columns to save in case theres an exception when readding the stock
         query = "SELECT ticker, date"
         for column in columnsToSave:
             query += ", " + column
         query += " FROM timeseriesdaily"
-        print('Getting data to save...')
         result = self.select(query, ())
         fieldsToRestore = {}
-        print('Indexing data to save...')
+        # Put the values into a dictionary
+        print('Indexing data to save to disk...')
         for row in result:
             if row[0] not in fieldsToRestore.keys():
                 fieldsToRestore[row[0]] = {}
@@ -461,24 +514,32 @@ class DBManager:
                 fieldsToRestore[row[0]][row[1]] = {}
             for i in range(0, len(columnsToSave)):
                 fieldsToRestore[row[0]][row[1]][columnsToSave[i]] = row[i + 2]
-        print('Saving data...')
+        # Save the dictionary to disk
+        print('Saving data to disk...')
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print('Deleteing old table...')
         self.insert("DELETE FROM tickers", ())
         print('Readding new table along with saved rows')
-        self.addManyNewStocks(tickersNSectors, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
+        self.addManyNewStocks(tickersNSectors, readdFromMemory=readdFromMemory, fieldsToRestore=fieldsToRestore,
+                              columnNames=columnsToSave)
+        self.av.localBackup = None
 
-    def readdStock(self, ticker, columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+    def readdStock(self, ticker, storedOnDisk=False, readdFromMemory=True,
+                   columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
         sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
             query += ", " + column
         query += " FROM timeseriesdaily WHERE ticker=%s"
-        print('Getting data to save...')
+        if readdFromMemory:
+            self.makeLocalBackup(ticker=ticker, storedOnDisk=storedOnDisk)
+        # Get all the columns to save in case theres an exception when readding the stock
+        print('Getting data to save to disk...')
         result = self.select(query, (ticker,))
         fieldsToRestore = {}
-        print('Indexing data to save...')
+        print('Indexing data to save to disk...')
+        # Put the values into a dictionary
         for row in result:
             if row[0] not in fieldsToRestore.keys():
                 fieldsToRestore[row[0]] = {}
@@ -486,13 +547,16 @@ class DBManager:
                 fieldsToRestore[row[0]][row[1]] = {}
             for i in range(0, len(columnsToSave)):
                 fieldsToRestore[row[0]][row[1]][columnsToSave[i]] = row[i + 2]
-        print('Saving data...')
+        # Save the dictionary to disk
+        print('Saving data to disk...')
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print('Deleteing ticker from table...')
         self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
         print('Readding stock...')
-        self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave)
+        self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave,
+                         readdFromMemory=readdFromMemory)
+        self.av.localBackup = None
 
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
@@ -502,7 +566,7 @@ class DBManager:
     def updateStocks(self, tickersNLastUpdated):
         print(
             "WARNING: Some features rely on past calculation (e.g. those based on EMAs) and do not update well, "
-            "consider readding the stocks instead using the inbuilt methgods as this will take the same amount of time "
+            "consider re-adding the stocks instead using the inbuilt methods as this will take the same amount of time "
             "whilst ensuring values for features are consistent.")
         insertArgs = []
         updateArgs = []
