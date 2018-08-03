@@ -8,6 +8,7 @@ from tensorflow.python.ops import resources
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import math
+from sklearn.model_selection import cross_val_score
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -175,7 +176,7 @@ class Classifier:
         train_writer.close()
 
     # Note that tensor_forest is not supported on windows in the build of tensorflow I used in this project, so this method not well tested
-    def classifyByTFRandomForest(self, noOfEpochs, noOfTrees, maxNoOfNodes):
+    def classifyByTFRandomForest(self, noOfEpochs, n_estimators, maxNoOfNodes):
         if self.noOfClasses is None:
             print("Warning: No of classes must be defined in constructor")
         else:
@@ -185,7 +186,7 @@ class Classifier:
 
             with tf.name_scope("forest"):
                 hParams = tensor_forest.ForestHParams(num_classes=self.noOfClasses, num_features=self.noOfFeatures,
-                                                      num_trees=noOfTrees, max_nodes=maxNoOfNodes).fill()
+                                                      num_trees=n_estimators, max_nodes=maxNoOfNodes).fill()
                 forestGraph = tensor_forest.RandomForestGraphs(hParams)
 
             with tf.name_scope("optimisers"):
@@ -223,22 +224,22 @@ class Classifier:
 
             return losses
 
-    def classifyBySKLRandomForestInRange(self, ks, change, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1,
+    def classifyBySKLRandomForestInRange(self, ks, change, n_estimators=10, max_features="auto", min_samples_leaf=1,
                                          seed=0,
                                          minSamplesSplit=2, bootstrap=True, maxDepth=None, returnPredictions=False,
                                          returnAccuracy=True, printProgress=True, printTime=True, graphIt=True,
                                          graphTitle=""):
         results = []
         for i in ks:
-            if change == "noOfTrees":
-                print('Trying noOfTrees=%s' % i)
-                noOfTrees = i
-            elif change == "maxFeaturesPerTree":
-                print('Trying maxFeaturesPerTree=%s' % i)
-                maxFeaturesPerTree = i
-            elif change == "minSamplesLeaf":
-                print('Trying minSamplesLeaf=%s' % i)
-                minSamplesLeaf = i
+            if change == "n_estimators":
+                print('Trying n_estimators=%s' % i)
+                n_estimators = i
+            elif change == "max_features":
+                print('Trying max_features=%s' % i)
+                max_features = i
+            elif change == "min_samples_leaf":
+                print('Trying min_samples_leaf=%s' % i)
+                min_samples_leaf = i
             elif change == "seed":
                 print('Trying seed=%s' % i)
                 seed = i
@@ -252,8 +253,8 @@ class Classifier:
                 print("Variable to change is unrecognised, terminating experiment")
                 break
             start = time.time()
-            result = self.classifyBySKLRandomForest(noOfTrees=noOfTrees, maxFeaturesPerTree=maxFeaturesPerTree,
-                                                    minSamplesLeaf=minSamplesLeaf, seed=seed, printProgress=False,
+            result = self.classifyBySKLRandomForest(n_estimators=n_estimators, max_features=max_features,
+                                                    min_samples_leaf=min_samples_leaf, seed=seed, printProgress=False,
                                                     returnPredictions=returnPredictions,
                                                     returnAccuracy=returnAccuracy, predictTest=False,
                                                     minSamplesSplit=minSamplesSplit, bootstrap=bootstrap,
@@ -285,12 +286,12 @@ class Classifier:
                 plt.show()
         return results
 
-    def classifyBySKLRandomForest(self, noOfTrees=10, maxFeaturesPerTree="auto", minSamplesLeaf=1, seed=0,
+    def classifyBySKLRandomForest(self, n_estimators=10, max_features="auto", min_samples_leaf=1, seed=0,
                                   printProgress=True,
                                   returnAccuracy=True, returnPredictions=False, predictTest=True, minSamplesSplit=2,
                                   bootstrap=True, maxDepth=None):
-        clf = RandomForestClassifier(n_estimators=noOfTrees, max_features=maxFeaturesPerTree,
-                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=minSamplesLeaf,
+        clf = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
+                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=min_samples_leaf,
                                      min_samples_split=minSamplesSplit, bootstrap=bootstrap, max_depth=maxDepth)
         if printProgress:
             print("Generating forest...")
@@ -323,3 +324,16 @@ class Classifier:
             else:
                 accs = clf.score(self.validX, self.validY) * 100
             return accs
+
+    def evaluateBySKLRandomForest(self, n_estimators=100, max_features=3, min_samples_leaf=98, seed=0):
+        print("Running cross-validation...")
+        rfc = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
+                                     min_samples_leaf=min_samples_leaf, random_state=seed)
+        scores = cross_val_score(rfc, self.trainX, self.trainY, n_jobs=self.coresToUse, cv=4)
+        acc = np.mean(scores)
+        std = np.std(scores)
+        print("Finding feature importances...")
+        rfc.n_jobs=self.coresToUse
+        rfc.fit(self.trainX, self.trainY)
+        featureImportances = rfc.feature_importances_
+        return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
