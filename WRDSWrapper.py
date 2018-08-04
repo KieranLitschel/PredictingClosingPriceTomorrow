@@ -4,6 +4,7 @@ import numpy as np
 
 class WRDS:
     def __init__(self, wrds_username):
+        print("Forming connection to wrds...")
         self.db = wrds.Connection(wrds_username=wrds_username)
 
     def getPermnos(self, tickers):
