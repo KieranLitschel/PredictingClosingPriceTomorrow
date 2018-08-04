@@ -1,5 +1,6 @@
 import wrds
 import numpy as np
+import pandas as pd
 
 
 class WRDS:
@@ -31,17 +32,18 @@ class WRDS:
             for column in columns:
                 query += "," + column
         else:
-            query += ","+columns
+            query += "," + columns
         query += " FROM wrdsapps_finratios.firm_ratio WHERE "
         if type(permnos) is list:
             first = True
             for permno in permnos:
                 if first:
-                    query += "permno="+str(permno)
+                    query += "permno=" + str(permno)
                     first = False
                 else:
-                    query += " OR permno="+str(permno)
+                    query += " OR permno=" + str(permno)
         else:
-            query += "permno="+permnos
+            query += "permno=" + permnos
         financials = np.array(self.db.raw_sql(query))
+        financials = np.where(pd.isnull(financials), None, financials)
         return financials
