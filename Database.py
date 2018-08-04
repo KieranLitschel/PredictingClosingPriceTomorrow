@@ -51,8 +51,9 @@ class DBManager:
     def __init__(self, apiKey, pwrd, n_jobs=None):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvPrediction5,obvPrediction8,obvPrediction13) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        # There should be no unecessary spaces in the string below (e.g. when listing columns), as this will break addFieldsToInsertQuery
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad20,adjCloseGrad20,obvGrad35,adjCloseGrad35,obvGrad50,adjCloseGrad50) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         if n_jobs is None:
             if multiprocessing.cpu_count() - 2 > 0:
                 self.jobs = multiprocessing.cpu_count() - 2
@@ -346,13 +347,14 @@ class DBManager:
                     pDiffPdiNdi = None
                 else:
                     pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
-                obvPrediction5 = fc.OBVFeatures(volume, 5)
-                obvPrediction8 = fc.OBVFeatures(volume, 8)
-                obvPrediction13 = fc.OBVFeatures(volume, 13)
+                obvGrad20, adjCloseGrad20 = fc.OBVFeatures(volume, 20)
+                obvGrad35, adjCloseGrad35 = fc.OBVFeatures(volume, 35)
+                obvGrad50, adjCloseGrad50 = fc.OBVFeatures(volume, 50)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
-                       stochPD, adx, pDiffPdiNdi, obvPrediction5, obvPrediction8, obvPrediction13]
+                       stochPD, adx, pDiffPdiNdi, obvGrad20, adjCloseGrad20, obvGrad35, adjCloseGrad35, obvGrad50,
+                       adjCloseGrad50]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
@@ -399,7 +401,8 @@ class DBManager:
         timeseriesArgs = []
         start = time.time()
         for (ticker, sector) in tickersNSectors:
-            print("Fetching stock data, %.2f%% complete." % (completed * 100 / len(tickersNSectors)))
+            print("Fetching stock data and computing features, %.2f%% complete." % (
+                        completed * 100 / len(tickersNSectors)))
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
             if readdFromMemory:
@@ -421,7 +424,7 @@ class DBManager:
         if fieldsToRestore is not None:
             query = addFieldsToInsertQuery(query, columnNames)
         if readdFromMemory:
-            self.av.localBackup = None # We do not need the local back up anymore, so we free up the memory
+            self.av.localBackup = None  # We do not need the local back up anymore, so we free up the memory
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
@@ -521,9 +524,24 @@ class DBManager:
         print('Deleteing old table...')
         self.insert("DELETE FROM tickers", ())
         print('Readding new table along with saved rows')
-        self.addManyNewStocks(tickersNSectors, readdFromMemory=readdFromMemory, fieldsToRestore=fieldsToRestore,
-                              columnNames=columnsToSave)
-        self.av.localBackup = None
+        raisedException = True
+        try:
+            self.addManyNewStocks(tickersNSectors, readdFromMemory=readdFromMemory, fieldsToRestore=fieldsToRestore,
+                                  columnNames=columnsToSave)
+            raisedException = False
+        finally:
+            self.av.localBackup = None
+            if raisedException:
+                print(
+                    "There was an exception when trying to re-add all stocks, restoring tickers and saved columns to database.\n"
+                    "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
+                    "Traceback of the exception will appear after the database has been restored.")
+                print("Deleting everything added to tickers and timeseriesdaily tables so far...")
+                self.insert("DELETE FROM tickers", ())
+                print("Readding pickled tickers and columns...")
+                self.readdPickledColumns()
+                print("Tickers and columns restored, traceback of exception follows.")
+                time.sleep(0.1)
 
     def readdStock(self, ticker, storedOnDisk=False, readdFromMemory=True,
                    columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
@@ -554,9 +572,24 @@ class DBManager:
         print('Deleteing ticker from table...')
         self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
         print('Readding stock...')
-        self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave,
-                         readdFromMemory=readdFromMemory)
-        self.av.localBackup = None
+        raisedException = True
+        try:
+            self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave,
+                             readdFromMemory=readdFromMemory)
+            raisedException = False
+        finally:
+            self.av.localBackup = None
+            if raisedException:
+                print(
+                    "There was an exception when trying to re-add all stocks, restoring tickers and saved columns to database.\n"
+                    "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
+                    "Traceback of the exception will appear after the database has been restored.")
+                print("Deleting everything added to tickers and timeseriesdaily tables so far...")
+                self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
+                print("Readding pickled tickers and columns...")
+                self.readdPickledColumns(singleStock=True)
+                print("Tickers and columns restored, traceback of exception follows.")
+                time.sleep(0.1)
 
     def updateAllStocks(self):
         tickersNLastUpdated = self.select("SELECT ticker, lastUpdated FROM tickers", '')
