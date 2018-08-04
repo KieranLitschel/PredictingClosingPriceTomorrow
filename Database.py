@@ -532,9 +532,9 @@ class DBManager:
         print('Saving data to disk...')
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print('Deleteing old table...')
+        print('Deleting old table...')
         self.insert("DELETE FROM timeseriesdaily", ())
-        print('Readding new table along with saved rows')
+        print('Re-adding new table along with saved rows')
         raisedException = True
         try:
             self.addManyNewStocks(tickersNSectors, readdFromMemory=readdFromMemory, fieldsToRestore=fieldsToRestore,
@@ -650,4 +650,27 @@ class DBManager:
             self.insert(query, updateArgs)
         print("100% complete.")
 
-    
+    def updateFundamentals(self, tickers=None, fundamentalColumns=['debt_ebitda']):
+        if tickers is None:
+            print("Getting tickers from database...")
+            tickers = self.select("SELECT ticker FROM tickers", ())
+            tickers = [ticker for (ticker,) in tickers]
+        print("Getting permnos from WRDS database...")
+        permnos = self.wrds.getPermnos(tickers)
+        print("Getting fundamentals from WRDS database...")
+        fundamentals = self.wrds.getFundamentals(list(permnos.keys()), fundamentalColumns)
+        fundamentalsArgs = []
+        for row in fundamentals:
+            permno = int(row[0])
+            date = row[1]
+            ticker = permnos[permno]
+            arg = [permno, date, ticker]
+            for i in range(2, len(row)):
+                arg.append(row[i])
+            fundamentalsArgs.append(tuple(arg))
+        query = "INSERT INTO fundamentals(permno,public_date,ticker"
+        for fundamentalColumn in fundamentalColumns:
+            query += "," + fundamentalColumn
+        query += ") VALUES (%s,DATE(%s),%s" + (",%s" * len(fundamentalColumns)) + ")"
+        print("Inserting fundamentals into database...")
+        self.insert(query, fundamentalsArgs, many=True)
