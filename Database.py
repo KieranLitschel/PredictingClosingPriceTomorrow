@@ -347,9 +347,9 @@ class DBManager:
                     pDiffPdiNdi = None
                 else:
                     pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
-                obvGrad20, adjCloseGrad20 = fc.OBVFeatures(volume, 20)
-                obvGrad35, adjCloseGrad35 = fc.OBVFeatures(volume, 35)
-                obvGrad50, adjCloseGrad50 = fc.OBVFeatures(volume, 50)
+                obvGrad20, adjCloseGrad20 = fc.OBVAndCloseGradients(volume, 20)
+                obvGrad35, adjCloseGrad35 = fc.OBVAndCloseGradients(volume, 35)
+                obvGrad50, adjCloseGrad50 = fc.OBVAndCloseGradients(volume, 50)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
