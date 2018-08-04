@@ -24,7 +24,7 @@ class WRDS:
             permnos[int(row[1])] = row[0]
         return permnos
 
-    def getFinancials(self, permnos, columns):
+    def getFundamentals(self, permnos, columns):
         query = "SELECT permno,public_date"
         if type(columns) is list:
             for column in columns:
