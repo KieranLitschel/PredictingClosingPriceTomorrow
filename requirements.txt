@@ -13,9 +13,13 @@ kiwisolver==1.0.1
 lxml==4.2.3
 Markdown==2.6.11
 matplotlib==2.2.2
+mock==2.0.0
 mysql-connector-python==8.0.11
 numpy==1.14.5
+pandas==0.23.3
+pbr==4.2.0
 protobuf==3.6.0
+psycopg2==2.7.5
 pyparsing==2.2.0
 python-dateutil==2.7.3
 pytz==2018.5
@@ -23,8 +27,10 @@ requests==2.19.1
 scikit-learn==0.19.1
 scipy==1.1.0
 six==1.11.0
+SQLAlchemy==1.2.10
 tensorboard==1.9.0
 tensorflow-gpu==1.9.0
 termcolor==1.1.0
 urllib3==1.23
 Werkzeug==0.14.1
+wrds==3.0.4
