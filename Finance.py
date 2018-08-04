@@ -203,8 +203,7 @@ class FinanceCalculator:
                     adx = 100 * self.EMA(self.pdisMinusNdis, 14) / (pdi + ndi)
         return pdi, ndi, adx
 
-    # I recommend looking at the readme section on it (Results of adding OBV) for a thorough explanation of what this is doing
-    def OBVFeatures(self, volume, period, threshold=0.05):
+    def OBVAndCloseGradients(self, volume, period):
         if self.obvs.get(period) is None:
             self.obvs[period] = [0]
         if len(self.adjCloses) >= 2:
@@ -218,42 +217,16 @@ class FinanceCalculator:
         elif adjClosePChange == 0:
             obv = self.obvs[period][-1]
         self.obvs[period].append(obv)
-        # obvsPrediction = None
         OBVGrad = None
         adjCloseGrad = None
         if len(self.obvs[period]) > period:
             OBVSample = self.obvs[period][len(self.obvs[period]) - period: len(self.obvs[period])]
-            """
-            denominator = 0
-            for i in OBVSample:
-                denominator += abs(i)
-            denominator = denominator / period
-            """
             OBVSample = np.array(OBVSample)
             x = np.arange(1, period + 1).reshape(period, 1)
             regr = linear_model.LinearRegression(n_jobs=self.jobs)
             regr.fit(x, OBVSample)
             OBVGrad = regr.coef_[0]
-            """
-            if denominator != 0:
-                OBVGradRatio = abs(OBVGrad) / denominator
-            else:
-                return None
-            flat = False
-            if OBVGradRatio <= threshold:
-                flat = True
-            """
             adjCloseSample = np.array(self.adjCloses[len(self.adjCloses) - period: len(self.adjCloses)])
             regr.fit(x, adjCloseSample)
             adjCloseGrad = regr.coef_[0]
-            """
-            if adjCloseGrad < 0 and OBVGrad < 0: # and not flat:
-                obvsPrediction = 0
-            elif adjCloseGrad > 0 and (OBVGrad < 0): # or flat):
-                obvsPrediction = 1
-            elif adjCloseGrad < 0 and (OBVGrad > 0): # or flat):
-                obvsPrediction = 2
-            elif adjCloseGrad > 0 and (OBVGrad > 0): # and not flat:
-                obvsPrediction = 3
-            """
         return OBVGrad, adjCloseGrad
