@@ -278,3 +278,7 @@ It is worth noting that the accuracy only increases by 0.1% using 4-fold cross v
 I investigated to see if I could workout why I was wrong and features containing raw gradients were significant. I think the reason is although I am correct about gradients varying a lot depending on the company and its point in history, the combination of looking at 500 companies over 20 years gives a large range of gradients, which seems to be the reason why these issues are overcome.
 
 The bar chart is ordered from left to right from most significant to least significant, and interestingly it seems to suggest that the longer the period examined, the more significant the gradient. As a result of this observation, I decided it was worth investigating larger period lengths. So I tried increasing to 20, 35, and 50 day periods, to see if significance increased further.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients%2020%2C%2035%2C%2050.PNG" alt="Bar chart of significance of adding gradients of longer periods" style="width: 10px;"/>
+
+The significance of the OBV gradients does not change much, but the significance of the gradients of the adjusted close increases significantly. Consequently I've decided I will include the adjusted close gradients of 5, 8, 13, 20, and 50, and will keep with the OBV gradients of 5, 8, and 13.
