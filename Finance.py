@@ -229,7 +229,7 @@ class FinanceCalculator:
 
     def adjCloseGrad(self, period):
         adjCloseGrad = None
-        if len(self.adjCloses[period]) > period:
+        if len(self.adjCloses) > period:
             adjCloseSample = np.array(self.adjCloses[len(self.adjCloses) - period: len(self.adjCloses)])
             x = np.arange(1, period + 1).reshape(period, 1)
             regr = linear_model.LinearRegression(n_jobs=self.jobs)
