@@ -18,6 +18,7 @@
     * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
   * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
     * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv)
+    * [**Results of adding OBV and adjClose gradients**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv-and-adjusted-close-gradients)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -270,7 +271,7 @@ Note that this section continues on from the previous.
 
 Suprisingly using the raw gradients as features proved successful, as we see below, with each feature having a significance of around 2%.
 
-<img src=https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients.PNG" alt="Bar chart of significance of adding gradients" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients.PNG" alt="Bar chart of significance of adding gradients" style="width: 10px;"/>
 
 It is worth noting that the accuracy only increases by 0.1% using 4-fold cross validation, but I have not retuned the hyperparameters so I am not too concerned about this. 
 
