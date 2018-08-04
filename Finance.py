@@ -203,7 +203,7 @@ class FinanceCalculator:
                     adx = 100 * self.EMA(self.pdisMinusNdis, 14) / (pdi + ndi)
         return pdi, ndi, adx
 
-    def OBVAndCloseGradients(self, volume, period):
+    def OBVGrad(self, volume, period):
         if self.obvs.get(period) is None:
             self.obvs[period] = [0]
         if len(self.adjCloses) >= 2:
@@ -218,7 +218,6 @@ class FinanceCalculator:
             obv = self.obvs[period][-1]
         self.obvs[period].append(obv)
         OBVGrad = None
-        adjCloseGrad = None
         if len(self.obvs[period]) > period:
             OBVSample = self.obvs[period][len(self.obvs[period]) - period: len(self.obvs[period])]
             OBVSample = np.array(OBVSample)
@@ -226,7 +225,14 @@ class FinanceCalculator:
             regr = linear_model.LinearRegression(n_jobs=self.jobs)
             regr.fit(x, OBVSample)
             OBVGrad = regr.coef_[0]
+        return OBVGrad
+
+    def adjCloseGrad(self, period):
+        adjCloseGrad = None
+        if len(self.adjCloses[period]) > period:
             adjCloseSample = np.array(self.adjCloses[len(self.adjCloses) - period: len(self.adjCloses)])
+            x = np.arange(1, period + 1).reshape(period, 1)
+            regr = linear_model.LinearRegression(n_jobs=self.jobs)
             regr.fit(x, adjCloseSample)
             adjCloseGrad = regr.coef_[0]
-        return OBVGrad, adjCloseGrad
+        return adjCloseGrad

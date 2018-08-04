@@ -54,8 +54,8 @@ class DBManager:
         self.pwrd = pwrd
         self.wrds = WRDSWrapper.WRDS(wrdsUsername)
         # There should be no unecessary spaces in the string below (e.g. when listing columns), as this will break addFieldsToInsertQuery
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad20,adjCloseGrad20,obvGrad35,adjCloseGrad35,obvGrad50,adjCloseGrad50) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad5,obvGrad8,obvGrad13,adjCloseGrad5,adjCloseGrad8,adjCloseGrad13,adjCloseGrad20,adjCloseGrad35,adjCloseGrad50) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         if n_jobs is None:
             if multiprocessing.cpu_count() - 2 > 0:
                 self.jobs = multiprocessing.cpu_count() - 2
@@ -349,14 +349,20 @@ class DBManager:
                     pDiffPdiNdi = None
                 else:
                     pDiffPdiNdi = ((pdi - ndi) / ndi) * 100
-                obvGrad20, adjCloseGrad20 = fc.OBVAndCloseGradients(volume, 20)
-                obvGrad35, adjCloseGrad35 = fc.OBVAndCloseGradients(volume, 35)
-                obvGrad50, adjCloseGrad50 = fc.OBVAndCloseGradients(volume, 50)
+                obvGrad5 = fc.OBVGrad(volume, 5)
+                obvGrad8 = fc.OBVGrad(volume, 8)
+                obvGrad13 = fc.OBVGrad(volume, 13)
+                adjCloseGrad5 = fc.adjCloseGrad(5)
+                adjCloseGrad8 = fc.adjCloseGrad(8)
+                adjCloseGrad13 = fc.adjCloseGrad(13)
+                adjCloseGrad20 = fc.adjCloseGrad(20)
+                adjCloseGrad35 = fc.adjCloseGrad(35)
+                adjCloseGrad50 = fc.adjCloseGrad(50)
                 arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
-                       stochPD, adx, pDiffPdiNdi, obvGrad20, adjCloseGrad20, obvGrad35, adjCloseGrad35, obvGrad50,
-                       adjCloseGrad50]
+                       stochPD, adx, pDiffPdiNdi, obvGrad5, obvGrad8, obvGrad13, adjCloseGrad5, adjCloseGrad8,
+                       adjCloseGrad13, adjCloseGrad20, adjCloseGrad35, adjCloseGrad50]
                 if fieldsToRestore is not None:
                     for column in columnNames:
                         value = None
