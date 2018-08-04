@@ -18,6 +18,7 @@
     * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
   * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
     * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv)
+    * [**Results of adding OBV and adjClose gradients**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv-and-adjusted-close-gradients)
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -258,8 +259,22 @@ I am not certain what value of n will perform best, so I've decided to add featu
 
 Disappointingly using training a random forest with our best features and testing using 4 fold cross validation with the new features and all the previous ones, accuracy only increased by around 0.01% and standard deviation increased by 0.02%. The significance assigned to each feature suggests to us the issue is not the hyperparameters, with the new features each being assigned a significance of around 1/15th of the previous least significant features.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20OBV%20Predictors.PNG" alt="Bar chart of adding OBV related featuressignificance of features" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20OBV%20Predictors.PNG" alt="Bar chart of significance of adding OBV related features" style="width: 10px;"/>
 
 I tried tweaking the threshold to classify the OBV gradient as flat, trying 0.01 and 0.1, but neither gave much improvement on using a value of 0.05. I thought about what might be wrong, and came to the conclusion it may be to do with how the gradient is calculated as flat. Dividing the gradient by the average of the absolute OBV works if the OBV is oscillating around 0. But over time successful stocks trend towards very large values of OBV's, meaning that the OBVGradRatio becomes very small. Consequently I decided to try without considering whether the gradient is flat, just going based on if its positive or negative, to see if we would see any improvement in performance.
 
-After making this change the significance of each feature doubled, but were still 1/10th of the next smallest, and accuracy remained below that without these features. The final thing I thought I'd try is just using the raw gradients as features, as although I thought it shouldn't work, I could have been wrong, so it was worth trying, as otherwise there was no point keeping features related to OBV.
+After making this change the significance of each feature doubled, but were still 1/10th of the next smallest, and accuracy remained below that without these features. The final thing I thought I'd try is just using the raw gradients as features, which I will continue in the next section, as although I thought it shouldn't work, I could have been wrong, so it was worth trying, as otherwise there was no point keeping features related to OBV.
+
+### Results of adding OBV and adjusted close gradients
+
+Note that this section continues on from the previous.
+
+Suprisingly using the raw gradients as features proved successful, as we see below, with each feature having a significance of around 2%.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients.PNG" alt="Bar chart of significance of adding gradients" style="width: 10px;"/>
+
+It is worth noting that the accuracy only increases by 0.1% using 4-fold cross validation, but I have not retuned the hyperparameters so I am not too concerned about this. 
+
+I investigated to see if I could workout why I was wrong and features containing raw gradients were significant. I think the reason is although I am correct about gradients varying a lot depending on the company and its point in history, the combination of looking at 500 companies over 20 years gives a large range of gradients, which seems to be the reason why these issues are overcome.
+
+The bar chart is ordered from left to right from most significant to least significant, and interestingly it seems to suggest that the longer the period examined, the more significant the gradient. As a result of this observation, I decided it was worth investigating larger period lengths. So I tried increasing to 20, 35, and 50 day periods, to see if significance increased further.
