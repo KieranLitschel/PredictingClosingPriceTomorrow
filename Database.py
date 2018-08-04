@@ -11,6 +11,7 @@ import numpy as np
 import pickle
 import Finance
 import multiprocessing
+import WRDSWrapper
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -48,9 +49,10 @@ def addFieldsToInsertQuery(query, fields):
 
 
 class DBManager:
-    def __init__(self, apiKey, pwrd, n_jobs=None):
+    def __init__(self, wrdsUsername, apiKey, pwrd, n_jobs=None):
         self.av = AVW.AlphaVantage(apiKey)
         self.pwrd = pwrd
+        self.wrds = WRDSWrapper.WRDS(wrdsUsername)
         # There should be no unecessary spaces in the string below (e.g. when listing columns), as this will break addFieldsToInsertQuery
         self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad20,adjCloseGrad20,obvGrad35,adjCloseGrad35,obvGrad50,adjCloseGrad50) " \
                                  "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
@@ -375,7 +377,7 @@ class DBManager:
         except IndexError:
             pass
 
-    def addNewStock(self, ticker, sector, fieldsToRestore=None, readdFromMemory=False, columnNames=[]):
+    def addNewStock(self, ticker, sector, fieldsToRestore=None, readdFromMemory=False, columnNames=[], readding=False):
         history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
         points = list(history.keys())
         if readdFromMemory:
@@ -383,9 +385,14 @@ class DBManager:
         else:
             lastUpdated = datetime.date.today()
         firstDay = pointToDate(points[-1])
-        query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
-                "VALUES(%s,%s,DATE(%s),DATE(%s))"
-        args = (ticker, sector, firstDay, lastUpdated)
+        if readding:
+            query = "UPDATE tickers SET firstDay=DATE(%s), lastUpdated=DATE(%s) " \
+                    "WHERE ticker=%s"
+            args = (firstDay, lastUpdated, ticker)
+        else:
+            query = "INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) " \
+                    "VALUES(%s,%s,DATE(%s),DATE(%s))"
+            args = (ticker, sector, firstDay, lastUpdated)
         self.insert(query, args)
         args = []
         self.timeseriesToArgs(ticker, points, history, args, fieldsToRestore=fieldsToRestore,
@@ -396,13 +403,14 @@ class DBManager:
         self.insert(query, args, many=True)
         print('Stock added successfully')
 
-    def addManyNewStocks(self, tickersNSectors, readdFromMemory=False, fieldsToRestore=None, columnNames=[]):
+    def addManyNewStocks(self, tickersNSectors, readdFromMemory=False, fieldsToRestore=None, columnNames=[],
+                         readding=False):
         completed = 0
         timeseriesArgs = []
         start = time.time()
         for (ticker, sector) in tickersNSectors:
             print("Fetching stock data and computing features, %.2f%% complete." % (
-                        completed * 100 / len(tickersNSectors)))
+                    completed * 100 / len(tickersNSectors)))
             history = self.av.getDailyHistory(AVW.OutputSize.FULL, ticker)
             points = list(history.keys())
             if readdFromMemory:
@@ -410,8 +418,12 @@ class DBManager:
             else:
                 lastUpdated = datetime.date.today()
             firstDay = pointToDate(points[-1])
-            self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
-                        (ticker, sector, firstDay, lastUpdated))
+            if readding:
+                self.insert("UPDATE tickers SET firstDay=DATE(%s), lastUpdated=DATE(%s) WHERE ticker=%s",
+                            (firstDay, lastUpdated, ticker))
+            else:
+                self.insert("INSERT INTO tickers(ticker,sector,firstDay,lastUpdated) VALUES(%s,%s,DATE(%s),DATE(%s))",
+                            (ticker, sector, firstDay, lastUpdated))
             self.timeseriesToArgs(ticker, points, history, timeseriesArgs, fieldsToRestore=fieldsToRestore,
                                   columnNames=columnNames)
             completed += 1
@@ -428,12 +440,7 @@ class DBManager:
         self.insert(query, timeseriesArgs, many=True)
         print('All stocks added')
 
-    def readdPickledColumns(self, singleStock=False):
-        print("Restoring tickers and sectors...")
-        if not singleStock:
-            with open('tickersNSectors.pickle', 'rb') as handle:
-                tickersNSectors = pickle.load(handle)
-            self.insert("INSERT INTO tickers(ticker,sector) VALUES (%s,%s)", tickersNSectors, many=True)
+    def readdPickledColumns(self):
         print("Restoring columns in timeseriesdaily...")
         with open('fieldsToRestore.pickle', 'rb') as handle:
             fieldsToRestore = pickle.load(handle)
@@ -494,10 +501,8 @@ class DBManager:
 
     def readdAllStocks(self, readdFromMemory=True, storedOnDisk=False,
                        columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+        tickersNSectors = self.select("SELECT ticker,sector FROM tickers", ())
         # Save a record of tickers and their sectors in case theres an exception when readding the stock
-        tickersNSectors = self.select("SELECT ticker,sector FROM tickers", '')
-        with open('tickersNSectors.pickle', 'wb') as handle:
-            pickle.dump(tickersNSectors, handle, protocol=pickle.HIGHEST_PROTOCOL)
         if readdFromMemory:
             self.makeLocalBackup(storedOnDisk=storedOnDisk)
         print('Getting data to save to disk...')
@@ -522,12 +527,12 @@ class DBManager:
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print('Deleteing old table...')
-        self.insert("DELETE FROM tickers", ())
+        self.insert("DELETE FROM timeseriesdaily", ())
         print('Readding new table along with saved rows')
         raisedException = True
         try:
             self.addManyNewStocks(tickersNSectors, readdFromMemory=readdFromMemory, fieldsToRestore=fieldsToRestore,
-                                  columnNames=columnsToSave)
+                                  columnNames=columnsToSave, readding=True)
             raisedException = False
         finally:
             self.av.localBackup = None
@@ -537,7 +542,7 @@ class DBManager:
                     "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
                     "Traceback of the exception will appear after the database has been restored.")
                 print("Deleting everything added to tickers and timeseriesdaily tables so far...")
-                self.insert("DELETE FROM tickers", ())
+                self.insert("DELETE FROM timeseriesdaily", ())
                 print("Readding pickled tickers and columns...")
                 self.readdPickledColumns()
                 print("Tickers and columns restored, traceback of exception follows.")
@@ -570,12 +575,12 @@ class DBManager:
         with open('fieldsToRestore.pickle', 'wb') as handle:
             pickle.dump(fieldsToRestore, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print('Deleteing ticker from table...')
-        self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
+        self.insert("DELETE FROM timeseriesdaily WHERE ticker=%s", (ticker,))
         print('Readding stock...')
         raisedException = True
         try:
             self.addNewStock(ticker, sector, fieldsToRestore=fieldsToRestore, columnNames=columnsToSave,
-                             readdFromMemory=readdFromMemory)
+                             readdFromMemory=readdFromMemory, readding=True)
             raisedException = False
         finally:
             self.av.localBackup = None
@@ -585,7 +590,7 @@ class DBManager:
                     "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
                     "Traceback of the exception will appear after the database has been restored.")
                 print("Deleting everything added to tickers and timeseriesdaily tables so far...")
-                self.insert("DELETE FROM tickers WHERE ticker=%s", (ticker,))
+                self.insert("DELETE FROM timeseriesdaily WHERE ticker=%s", (ticker,))
                 print("Readding pickled tickers and columns...")
                 self.readdPickledColumns(singleStock=True)
                 print("Tickers and columns restored, traceback of exception follows.")
@@ -638,3 +643,5 @@ class DBManager:
             updateArgs = updateArgs[0]
             self.insert(query, updateArgs)
         print("100% complete.")
+
+    
