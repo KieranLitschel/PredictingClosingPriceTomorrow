@@ -281,4 +281,6 @@ The bar chart is ordered from left to right from most significant to least signi
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients%2020%2C%2035%2C%2050.PNG" alt="Bar chart of significance of adding gradients of longer periods" style="width: 10px;"/>
 
-The significance of the OBV gradients does not change much, but the significance of the gradients of the adjusted close increases significantly. Consequently I've decided I will include the adjusted close gradients of 5, 8, 13, 20, and 50, and will keep with the OBV gradients of 5, 8, and 13.
+The significance of the OBV gradients does not change much, but the significance of the gradients of the adjusted close increases significantly. Consequently I've decided I will include the adjusted close gradients of 5, 8, 13, 20, 35, and 50, and will keep with the OBV gradients of 5, 8, and 13. Below are the significance of including those features.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Final%20Gradients.PNG" alt="Bar chart of significance of adding final gradients" style="width: 10px;"/>
