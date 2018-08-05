@@ -547,7 +547,7 @@ class DBManager:
                     "There was an exception when trying to re-add all stocks, restoring tickers and saved columns to database.\n"
                     "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
                     "Traceback of the exception will appear after the database has been restored.")
-                print("Deleting everything added to tickers and timeseriesdaily tables so far...")
+                print("Deleting everything added to timeseriesdaily tables so far...")
                 self.insert("DELETE FROM timeseriesdaily", ())
                 print("Readding pickled tickers and columns...")
                 self.readdPickledColumns()
@@ -595,7 +595,7 @@ class DBManager:
                     "There was an exception when trying to re-add all stocks, restoring tickers and saved columns to database.\n"
                     "Please make sure to set storedOnDisk to true when re-adding using this method to re-add the database again once the issue is fixed.\n"
                     "Traceback of the exception will appear after the database has been restored.")
-                print("Deleting everything added to tickers and timeseriesdaily tables so far...")
+                print("Deleting everything added to timeseriesdaily tables so far...")
                 self.insert("DELETE FROM timeseriesdaily WHERE ticker=%s", (ticker,))
                 print("Readding pickled tickers and columns...")
                 self.readdPickledColumns(singleStock=True)
