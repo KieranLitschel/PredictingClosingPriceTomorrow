@@ -209,7 +209,7 @@ class FinanceCalculator:
         if len(self.adjCloses) >= 2:
             adjClosePChange = ((self.adjCloses[-1] - self.adjCloses[-2]) / self.adjCloses[-2]) * 100
         else:
-            return None, None
+            return None
         if adjClosePChange > 0:
             obv = self.obvs[period][-1] + volume
         elif adjClosePChange < 0:
