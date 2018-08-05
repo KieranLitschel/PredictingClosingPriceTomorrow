@@ -284,3 +284,5 @@ The bar chart is ordered from left to right from most significant to least signi
 The significance of the OBV gradients does not change much, but the significance of the gradients of the adjusted close increases significantly. Consequently I've decided I will include the adjusted close gradients of 5, 8, 13, 20, 35, and 50, and will keep with the OBV gradients of 5, 8, and 13. Below are the significance of including those features.
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Final%20Gradients.PNG" alt="Bar chart of significance of adding final gradients" style="width: 10px;"/>
+
+For the record, these features increase accuracy using 4-fold cross validation to 33.0955%, and decrease standard deviation to 0.2366%. This is only a minor improvement, but there should be a more substantial improvement when we retune the hyperparameters.
