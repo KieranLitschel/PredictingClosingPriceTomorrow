@@ -16,9 +16,10 @@
     * [**Results of experiments 1, 2, and 3**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-experiments-1-2-and-3)
     * [**Analysing the importance of each feature**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#analysing-the-importance-of-each-feature)
     * [**Conclusions drawn from experimenting with random forests**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#conclusion)
-  * [**Adding more features**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-features)
+  * [**Adding more technical indicators**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-more-technical-indicators)
     * [**Results of adding OBV**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv)
     * [**Results of adding OBV and adjClose gradients**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv-and-adjusted-close-gradients)
+  * [**Adding fundamental ratios**]
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
@@ -287,7 +288,7 @@ The significance of the OBV gradients does not change much, but the significance
 
 For the record, these features increase accuracy using 4-fold cross validation to 33.0955%, and decrease standard deviation to 0.2366%. This is only a minor improvement, but there should be a more substantial improvement when we retune the hyperparameters.
 
-## Adding fundamentals
+## Adding fundamental ratios
 
 Up until now I have only been using technical indicators to make predictions, but I have now obtained access to data on fundamental ratios through Wharton Research Data Services. The downside to this is that they only have monthly data on the period 1990 to 2015, so I will only be able to make predictions on past data. But I think the benefit outweighs this downside, as it is impossible to value a company based purely on technical indicators, so fundamental ratios should allow me to make far better predictions.
 
