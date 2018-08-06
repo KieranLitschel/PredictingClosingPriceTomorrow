@@ -234,7 +234,7 @@ Unfortuantely this had little effect on accuracy, with replacing the old feature
 
 The random forest classifier was an improvement over KNN as it drastically reduced prediction time, with the model being pregenerated, but disappointingly we only saw around a 0.6% increase in accuracy. It seems that the model is dominated by bollinger bands, with the other features contributing little in comparison. We would have expected to see an increase in accuracy by considering more features at each split, but we didn't, with considering less features than default at each split performing best. Considering all of this, it seems that the best course of action is to add more features, which I plan to do next.
 
-## Adding more features
+## Adding more technical indicators
 
 ### Results of adding OBV
 
@@ -287,7 +287,7 @@ The significance of the OBV gradients does not change much, but the significance
 
 For the record, these features increase accuracy using 4-fold cross validation to 33.0955%, and decrease standard deviation to 0.2366%. This is only a minor improvement, but there should be a more substantial improvement when we retune the hyperparameters.
 
-### Adding fundamentals
+## Adding fundamentals
 
 Up until now I have only been using technical indicators to make predictions, but I have now obtained access to data on fundamental ratios through Wharton Research Data Services. The downside to this is that they only have monthly data on the period 1990 to 2015, so I will only be able to make predictions on past data. But I think the benefit outweighs this downside, as it is impossible to value a company based purely on technical indicators, so fundamental ratios should allow me to make far better predictions.
 
