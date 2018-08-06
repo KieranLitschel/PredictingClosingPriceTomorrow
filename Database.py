@@ -54,8 +54,8 @@ class DBManager:
         self.pwrd = pwrd
         self.wrds = WRDSWrapper.WRDS(wrdsUsername)
         # There should be no unecessary spaces in the string below (e.g. when listing columns), as this will break addFieldsToInsertQuery
-        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad5,obvGrad8,obvGrad13,adjCloseGrad5,adjCloseGrad8,adjCloseGrad13,adjCloseGrad20,adjCloseGrad35,adjCloseGrad50) " \
-                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        self.insertAllTSDQuery = "INSERT INTO timeseriesdaily(ticker,date,dateTmrw,open,high,low,close,adjClose,volume,lastFundamental,adjClosePChange,pDiffClose5SMA,pDiffClose8SMA,pDiffClose13SMA,rsi,pDiffCloseUpperBB,pDiffCloseLowerBB,pDiff20SMAAbsBB,pDiff5SMA8SMA,pDiff5SMA13SMA,pDiff8SMA13SMA,macdHist,deltaMacdHist,stochPK,stochPD,adx,pDiffPdiNdi,obvGrad5,obvGrad8,obvGrad13,adjCloseGrad5,adjCloseGrad8,adjCloseGrad13,adjCloseGrad20,adjCloseGrad35,adjCloseGrad50) " \
+                                 "VALUES(%s,DATE(%s),DATE(%s),%s,%s,%s,%s,%s,%s,DATE(%s),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         if n_jobs is None:
             if multiprocessing.cpu_count() - 2 > 0:
                 self.jobs = multiprocessing.cpu_count() - 2
@@ -64,7 +64,7 @@ class DBManager:
         else:
             self.jobs = n_jobs
 
-    def insert(self, query, args, many=False):
+    def insert(self, query, args, many=False, dialog=True):
         try:
             conn = mysql.connector.connect(host='127.0.0.1', database='stocks', user='root', password=self.pwrd)
             cursor = conn.cursor()
@@ -73,15 +73,18 @@ class DBManager:
                 # server
                 if len(args) > 100000:
                     # Implemented this as I found that if the insertion had more than 100k args it failed
-                    print('Beginning batch insertion into the database...')
+                    if dialog:
+                        print('Beginning batch insertion into the database...')
                     batchNo = 1
                     for i in range(100000, len(args), 100000):
-                        print('Inserting %s to %s' % (i - 100000, i))
+                        if dialog:
+                            print('Inserting %s to %s' % (i - 100000, i))
                         cursor.executemany(query, args[i - 100000: i])
                         conn.commit()
                         batchNo += 1
                     if i < len(args) - 1:
-                        print('Inserting %s to %s' % (i, len(args)))
+                        if dialog:
+                            print('Inserting %s to %s' % (i, len(args)))
                         cursor.executemany(query, args[i: len(args)])
                         conn.commit()
                 else:
@@ -271,6 +274,12 @@ class DBManager:
 
     def timeseriesToArgs(self, ticker, points, history, args, lastUpdated=datetime.date.min, fieldsToRestore=None,
                          columnNames=[]):
+        fmntlDates = [date for (date,) in
+                      self.select("SELECT public_date FROM fundamentals WHERE ticker=%s", (ticker,))]
+        fmntlLoaded = False
+        if len(fmntlDates) != 0:
+            fmntlLoaded = True
+            fmntlCounter = 0
         maxPeriod = 26
         if lastUpdated == datetime.date.min:
             addingNewStock = True
@@ -313,6 +322,18 @@ class DBManager:
                 close = float(pointInHistory.get('4. close'))
                 adjClose = float(pointInHistory.get('5. adjusted close'))
                 volume = int(pointInHistory.get('6. volume'))
+                lastFundamental = None
+                if fmntlLoaded:
+                    if fmntlCounter < len(fmntlDates) - 1:
+                        while (fmntlDates[fmntlCounter+1]-date).days < 0:
+                            fmntlCounter += 1
+                            if fmntlCounter == len(fmntlDates) - 1:
+                                break
+                    if fmntlCounter == len(fmntlDates) - 1 and (date - fmntlDates[fmntlCounter]).days > 31:
+                        lastFundamental = None
+                        fmntlLoaded = False
+                    else:
+                        lastFundamental = fmntlDates[fmntlCounter]
                 if first:
                     if addingNewStock:
                         adjClosePChange = None
@@ -358,7 +379,8 @@ class DBManager:
                 adjCloseGrad20 = fc.adjCloseGrad(20)
                 adjCloseGrad35 = fc.adjCloseGrad(35)
                 adjCloseGrad50 = fc.adjCloseGrad(50)
-                arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, adjClosePChange,
+                arg = [ticker, date, dateTmrw, open, high, low, close, adjClose, volume, lastFundamental,
+                       adjClosePChange,
                        pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, rsi, pDiffCloseUpperBB, pDiffCloseLowerBB,
                        pDiff20SMAAbsBB, pDiff5SMA8SMA, pDiff5SMA13SMA, pDiff8SMA13SMA, macdHist, deltaMacdHist, stochPK,
                        stochPD, adx, pDiffPdiNdi, obvGrad5, obvGrad8, obvGrad13, adjCloseGrad5, adjCloseGrad8,
@@ -598,7 +620,7 @@ class DBManager:
                 print("Deleting everything added to timeseriesdaily tables so far...")
                 self.insert("DELETE FROM timeseriesdaily WHERE ticker=%s", (ticker,))
                 print("Readding pickled tickers and columns...")
-                self.readdPickledColumns(singleStock=True)
+                self.readdPickledColumns()
                 print("Tickers and columns restored, traceback of exception follows.")
                 time.sleep(0.1)
 
@@ -653,8 +675,7 @@ class DBManager:
     def updateFundamentals(self, tickers=None, fundamentalColumns=['debt_ebitda']):
         if tickers is None:
             print("Getting tickers from database...")
-            tickers = self.select("SELECT ticker FROM tickers", ())
-            tickers = [ticker for (ticker,) in tickers]
+            tickers = [ticker for (ticker,) in self.select("SELECT ticker FROM tickers", ())]
         print("Getting permnos from WRDS database...")
         permnos = self.wrds.getPermnos(tickers)
         print("Getting fundamentals from WRDS database...")
@@ -667,10 +688,41 @@ class DBManager:
             arg = [permno, date, ticker]
             for i in range(2, len(row)):
                 arg.append(row[i])
-            fundamentalsArgs.append(tuple(arg))
+            fundamentalsArgs.append(arg)
         query = "INSERT INTO fundamentals(permno,public_date,ticker"
         for fundamentalColumn in fundamentalColumns:
             query += "," + fundamentalColumn
         query += ") VALUES (%s,DATE(%s),%s" + (",%s" * len(fundamentalColumns)) + ")"
         print("Inserting fundamentals into database...")
         self.insert(query, fundamentalsArgs, many=True)
+        self.removeRedundantPermnos()
+
+    # Ensures that there is only one quote of fundamental ratios for each day
+    def removeRedundantPermnos(self):
+        print("Removing redundant permnos")
+        startCount = int(self.select("SELECT COUNT(*) FROM fundamentals", ())[0][0])
+        noColumns = len(self.select("DESC fundamentals", ()))
+        permnoCounts = self.select(
+            "SELECT t2.ticker,COUNT(*) FROM (SELECT DISTINCT t1.ticker,t1.permno FROM fundamentals AS t1) AS t2 GROUP BY t2.ticker",
+            ())
+        for permnoCount in permnoCounts:
+            if permnoCount[1] > 1:
+                ticker = permnoCount[0]
+                values = self.select(
+                    "SELECT * FROM fundamentals WHERE ticker=%s ORDER BY public_date ASC, permno ASC", (ticker,))
+                i = 1
+                changed = False
+                while i < len(values) - 1:
+                    lastDate = values[i - 1][1]
+                    currentDate = values[i][1]
+                    if lastDate == currentDate:
+                        del values[i]
+                        changed = True
+                    else:
+                        i += 1
+                if changed is True:
+                    self.insert("DELETE FROM fundamentals WHERE ticker=%s", (ticker,))
+                    self.insert("INSERT INTO fundamentals VALUES (%s,DATE(%s)" + (",%s" * (noColumns - 2)) + ")",
+                                values, many=True, dialog=False)
+        endCount = int(self.select("SELECT COUNT(*) FROM fundamentals", ())[0][0])
+        print("Reduced fundamentals table from %s rows to %s" % (startCount, endCount))
