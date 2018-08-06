@@ -121,11 +121,16 @@ class DBManager:
 
     # There was no way around formatting the string to add the field name to the sql query, so I made this method to
     # ensure the injected field name is not malicious
-    def getSafeName(self, noOfClasses, trainingPc, testPc, validationPc):
+    def getSafeName(self, noOfClasses, trainingPc, testPc, validationPc, wrds):
         if validationPc != 0:
-            return "`%s_%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc), int(validationPc))
+            name = "`%s_%s_%s_%s" % (int(noOfClasses), int(trainingPc), int(testPc), int(validationPc))
         else:
-            return "`%s_%s_%s`" % (int(noOfClasses), int(trainingPc), int(testPc))
+            name = "`%s_%s_%s" % (int(noOfClasses), int(trainingPc), int(testPc))
+        if wrds:
+            name += "_wrds`"
+        else:
+            wrds += "`"
+        return name
 
     def determineShortestMember(self, existingVals, bandData, bandNo, shortest, offset):
         if len(existingVals) == 1 and (len(bandData[bandNo]) < shortest):
@@ -134,9 +139,13 @@ class DBManager:
             shortest = len(bandData[bandNo]) + existingVals[bandNo + offset]
         return shortest
 
-    def updateSetMembers(self, classBands, trainingPc, testPc, validationPc=0):
+    def updateSetMembers(self, classBands, trainingPc, testPc, validationPc=0, wrds=False):
         noOfClasses = len(classBands) + 1
-        name = self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)
+        name = self.getSafeName(noOfClasses, trainingPc, testPc, validationPc, wrds)
+        if wrds:
+            extension = " AND t1.lastFundamental IS NOT NULL"
+        else:
+            extension = ""
         column_names = self.select(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='stocks' AND TABLE_NAME='timeseriesdaily'",
             ())
@@ -145,13 +154,13 @@ class DBManager:
         if name[1:-1] not in column_names:
             self.insert(
                 "ALTER TABLE timeseriesdaily ADD %s INT NULL;" % self.getSafeName(noOfClasses, trainingPc, testPc,
-                                                                                  validationPc),
+                                                                                  validationPc, wrds),
                 ())
         existingVals = self.select(
             "SELECT COUNT(*) FROM timeseriesdaily GROUP BY {0} ORDER BY {0} ASC".format(
                 self.getSafeName(noOfClasses,
                                  trainingPc, testPc,
-                                 validationPc)), ())
+                                 validationPc, wrds)), ())
         if (validationPc == 0 and len(existingVals) == 2 * noOfClasses + 1) or (
                 validationPc != 0 and len(existingVals) == 3 * noOfClasses + 1):
             offset = 1
@@ -173,7 +182,8 @@ class DBManager:
             "WHERE t2.adjClosePChange < %s "
             "AND t1.ticker = t2.ticker "
             "AND t1.dateTmrw = t2.date "
-            "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            "AND t1.{0} IS NULL".format(
+                self.getSafeName(noOfClasses, trainingPc, testPc, validationPc, wrds)) + extension,
             (classBands[0],)))
         shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
@@ -187,7 +197,7 @@ class DBManager:
                     "AND t2.adjClosePChange < %s "
                     "AND t1.ticker = t2.ticker "
                     "AND t1.dateTmrw = t2.date "
-                    "AND t1.{0} IS NULL".format(name),
+                    "AND t1.{0} IS NULL".format(name) + extension,
                     (classBands[bandNo - 1], classBands[bandNo])))
             shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
             bandNo += 1
@@ -198,7 +208,8 @@ class DBManager:
             "WHERE t2.adjClosePChange >= %s "
             "AND t1.ticker = t2.ticker "
             "AND t1.dateTmrw = t2.date "
-            "AND t1.{0} IS NULL".format(self.getSafeName(noOfClasses, trainingPc, testPc, validationPc)),
+            "AND t1.{0} IS NULL".format(
+                self.getSafeName(noOfClasses, trainingPc, testPc, validationPc, wrds)) + extension,
             (classBands[-1],)))
         shortest = self.determineShortestMember(existingVals, bandData, bandNo, shortest, offset)
         bandNo += 1
@@ -232,7 +243,7 @@ class DBManager:
             classNo += 1
         print('Determined classes.')
         query = "UPDATE timeseriesdaily SET {0}=%s WHERE ticker=%s AND date=%s".format(
-            self.getSafeName(noOfClasses, trainingPc, testPc, validationPc))
+            self.getSafeName(noOfClasses, trainingPc, testPc, validationPc, wrds))
         if len(args) == 1:
             self.insert(query, args[0])
         elif len(args) > 1:
@@ -325,7 +336,7 @@ class DBManager:
                 lastFundamental = None
                 if fmntlLoaded:
                     if fmntlCounter < len(fmntlDates) - 1:
-                        while (fmntlDates[fmntlCounter+1]-date).days < 0:
+                        while (fmntlDates[fmntlCounter + 1] - date).days < 0:
                             fmntlCounter += 1
                             if fmntlCounter == len(fmntlDates) - 1:
                                 break
@@ -528,7 +539,7 @@ class DBManager:
         self.av.localBackup = priceHistory
 
     def readdAllStocks(self, readdFromMemory=True, storedOnDisk=False,
-                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`','`4_60_20_20_wrds`']):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", ())
         # Save a record of tickers and their sectors in case theres an exception when readding the stock
         if readdFromMemory:
@@ -577,7 +588,7 @@ class DBManager:
                 time.sleep(0.1)
 
     def readdStock(self, ticker, storedOnDisk=False, readdFromMemory=True,
-                   columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`']):
+                   columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']):
         sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
