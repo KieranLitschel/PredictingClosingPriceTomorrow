@@ -290,6 +290,12 @@ For the record, these features increase accuracy using 4-fold cross validation t
 
 ## Adding fundamental ratios
 
+### Introduction
+
 Up until now I have only been using technical indicators to make predictions, but I have now obtained access to data on fundamental ratios through Wharton Research Data Services. The downside to this is that they only have monthly data on the period 1990 to 2015, so I will only be able to make predictions on past data. But I think the benefit outweighs this downside, as it is impossible to value a company based purely on technical indicators, so fundamental ratios should allow me to make far better predictions.
 
 The first issue I've encountered is that quarterly reports are not associated with a ticker symbol, but a permno number, most stocks have multiple permno numbers, being issued a new one when there is a major restructuring. This adds a layer of complexity as permno numbers can describe overlapping periods, and there is no way to automate the process of deciding which permno is more relevant. Consequently I've decided the best way to go about this is by favouring smaller permno numbers to larger ones when choosing which one to use. This is because a permno number is permenant, so they are not reissued, meaning larger numbers were issued later than smaller ones. However if a smaller permno does not cover the entire 1990 to 2015 period, I will make use of the next greatest permno number for the period it doesn't cover. This is a somewhat arbitrary decision, but it should keep ratios consistent which is important for training.
+
+As I will be using a slightly different period I have rerun the same tests I performed in the last experiment with the new set of data. There is little variation, with accuracy using 4-fold cross validation being 33.0197%, standard deviation being 0.2874%. The feature significances do not change much either, but are displayed below for reference anyway.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20Before%20Adding%20Fundamentals.PNG" alt="Bar chart of significance of features using funamentals data set" style="width: 10px;"/>
