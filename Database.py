@@ -12,6 +12,7 @@ import pickle
 import Finance
 import multiprocessing
 import WRDSWrapper
+from sklearn.linear_model import LinearRegression
 
 
 # Modified version of method from https://pythonprogramming.net/sp500-company-list-python-programming-for-finance/
@@ -252,6 +253,8 @@ class DBManager:
 
     def getLearningData(self, setFieldName, reqFields, reqNotNulls=[]):
         setInfo = setFieldName.split('_')
+        if setInfo[-1] == 'wrds':
+            del setInfo[-1]
         noOfClasses = int(setInfo[0])
         query = "SELECT `%s`" % setFieldName
         for reqField in reqFields:
@@ -539,7 +542,7 @@ class DBManager:
         self.av.localBackup = priceHistory
 
     def readdAllStocks(self, readdFromMemory=True, storedOnDisk=False,
-                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`','`4_60_20_20_wrds`']):
+                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']):
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", ())
         # Save a record of tickers and their sectors in case theres an exception when readding the stock
         if readdFromMemory:
@@ -683,7 +686,9 @@ class DBManager:
             self.insert(query, updateArgs)
         print("100% complete.")
 
-    def updateFundamentals(self, tickers=None, fundamentalColumns=['debt_ebitda']):
+    def updateFundamentals(self, tickers=None):
+        fundamentalColumns = self.select("DESC fundamentals", ())
+        fundamentalColumns = [feature for (feature, _, _, _, _, _) in fundamentalColumns][3:len(fundamentalColumns)]
         if tickers is None:
             print("Getting tickers from database...")
             tickers = [ticker for (ticker,) in self.select("SELECT ticker FROM tickers", ())]
@@ -692,6 +697,7 @@ class DBManager:
         print("Getting fundamentals from WRDS database...")
         fundamentals = self.wrds.getFundamentals(list(permnos.keys()), fundamentalColumns)
         fundamentalsArgs = []
+        print("Preparing fundamentals for insertion into database...")
         for row in fundamentals:
             permno = int(row[0])
             date = row[1]
@@ -707,6 +713,15 @@ class DBManager:
         print("Inserting fundamentals into database...")
         self.insert(query, fundamentalsArgs, many=True)
         self.removeRedundantPermnos()
+        print("Filling in blank columns...")
+        columnsToSetMaxIfNull = ["cash_ratio", "curr_ratio", "intcov_ratio", "ocf_lct", "profit_lct", "quick_ratio"]
+        columnsToSetZerioIfNull = ["curr_debt", "int_debt", "int_totdebt"]
+        for column in columnsToSetZerioIfNull:
+            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL" % (column, 0, column), ())
+        for column in columnsToSetMaxIfNull:
+            max = int(self.select("SELECT MAX(%s) FROM fundamentals" % column, ())[0][0])
+            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL" % (column, max, column), ())
+        self.predictUnknownColumns(fundamentalColumns)
 
     # Ensures that there is only one quote of fundamental ratios for each day
     def removeRedundantPermnos(self):
@@ -737,3 +752,78 @@ class DBManager:
                                 values, many=True, dialog=False)
         endCount = int(self.select("SELECT COUNT(*) FROM fundamentals", ())[0][0])
         print("Reduced fundamentals table from %s rows to %s" % (startCount, endCount))
+
+    def predictUnknownColumns(self, fundamentalColumns):
+        print("Predicting blank columns...")
+        query = "SELECT * FROM fundamentals WHERE "
+        first = True
+        for column in fundamentalColumns:
+            if first:
+                query += column + " IS NOT NULL"
+                first = False
+            else:
+                query += " AND " + column + " IS NOT NULL"
+        notNullRows = np.array(self.select(query, ()))
+        query = "SELECT * FROM fundamentals WHERE "
+        first = True
+        for fundamentalColumn in fundamentalColumns:
+            if first:
+                query += fundamentalColumn + " IS NULL "
+                first = False
+            else:
+                query += " OR " + fundamentalColumn + " IS NULL "
+        rows = np.array(self.select(query, ()))
+        count = 0
+        nullCols = {}
+        for row in rows:
+            nullColumns = []
+            notNullColumns = []
+            for i in range(3, len(row)):
+                if row[i] is None:
+                    nullColumns.append(i)
+                else:
+                    notNullColumns.append(i)
+            name = ""
+            for column in nullColumns:
+                name += fundamentalColumns[column - 3] + ","
+            if nullCols.get(name) is None:
+                nullCols[name] = [row]
+            else:
+                nullCols[name].append(row)
+        for key in nullCols.keys():
+            print("%.2f%% complete." % (count * 100 / len(nullCols.keys())))
+            row = nullCols[key][0]
+            nullColumns = []
+            notNullColumns = []
+            for i in range(3, len(row)):
+                if row[i] is None:
+                    nullColumns.append(i)
+                else:
+                    notNullColumns.append(i)
+            X = np.array(nullCols[key])[:, notNullColumns]
+            trainX = notNullRows[:, notNullColumns]
+            args = []
+            for i in range(0, np.shape(X)[0]):
+                args.append([])
+            for columnNo in nullColumns:
+                trainY = notNullRows[:, columnNo].reshape(-1, 1)
+                rgr = LinearRegression(n_jobs=self.jobs)
+                rgr.fit(trainX, trainY)
+                pred = rgr.predict(X)
+                for i in range(0, np.shape(X)[0]):
+                    args[i].append(pred[i][0])
+            for i in range(0, np.shape(X)[0]):
+                args[i].append(nullCols[key][i][0])
+                args[i].append(nullCols[key][i][1])
+                args[i] = tuple(args[i])
+            query = "UPDATE fundamentals SET "
+            first = True
+            for columnNo in nullColumns:
+                if first:
+                    query += fundamentalColumns[columnNo - 3] + "=%s"
+                    first = False
+                else:
+                    query += ", " + fundamentalColumns[columnNo - 3] + "=%s"
+            query += " WHERE permno=%s AND public_date=%s"
+            self.insert(query, args, many=True, dialog=False)
+            count += 1
