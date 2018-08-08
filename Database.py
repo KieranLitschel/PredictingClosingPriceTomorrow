@@ -264,7 +264,7 @@ class DBManager:
             self.insert(query, args, many=True)
         print('Classes updated for field %s in table timeseriesdaily' % name)
 
-    def getLearningData(self, setFieldName, reqFields=[], reqNotNulls=[]):
+    def getLearningData(self, setFieldName, reqFields=[], reqNotNulls=[], fundamentalColumns=None):
         if reqFields == []:
             reqFields = self.getTimeseriesColumns()
         if reqNotNulls == []:
@@ -276,7 +276,8 @@ class DBManager:
             wrds = True
         noOfClasses = int(setInfo[0])
         if wrds:
-            fundamentalColumns = self.getFundamentalColumns()
+            if fundamentalColumns is None:
+                fundamentalColumns = self.getFundamentalColumns()
             query = "SELECT `%s`" % setFieldName
             for reqField in reqFields:
                 query += ", " + reqField
@@ -284,10 +285,10 @@ class DBManager:
                 query += ", " + reqField
             query += " FROM timeseriesdaily AS t " \
                      "INNER JOIN fundamentals AS f " \
-                     "WHERE t.ticker = f.ticker " \
-                     "AND t.lastFundamental = f.public_date " \
-                     "AND `{0}` >= %s " \
-                     "AND `{0}` <= %s ".format(setFieldName)
+                     "WHERE `{0}` >= %s " \
+                     "AND `{0}` <= %s " \
+                     "AND t.ticker = f.ticker " \
+                     "AND t.lastFundamental = f.public_date ".format(setFieldName)
             for reqNotNull in reqNotNulls:
                 query += "AND " + reqNotNull + " IS NOT NULL "
         else:
