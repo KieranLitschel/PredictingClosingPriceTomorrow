@@ -64,6 +64,7 @@ class DBManager:
                 self.jobs = 1
         else:
             self.jobs = n_jobs
+        self.classColumns = ['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']
 
     def insert(self, query, args, many=False, dialog=True):
         try:
@@ -111,6 +112,18 @@ class DBManager:
         finally:
             cursor.close()
             conn.close()
+
+    def getFundamentalColumns(self):
+        fundamentalColumns = self.select("DESC fundamentals", ())
+        fundamentalColumns = [feature for (feature, _, _, _, _, _) in fundamentalColumns][3:len(fundamentalColumns)]
+        return fundamentalColumns
+
+    def getTimeseriesColumns(self):
+        timeseriesColumns = self.select("DESC timeseriesdaily", ())
+        timeseriesColumns = [feature for (feature, _, _, _, _, _) in timeseriesColumns][10:len(timeseriesColumns)]
+        for column in self.classColumns:
+            timeseriesColumns.remove(column[1:len(column) - 1])
+        return timeseriesColumns
 
     def formClassBands(self, noOfClasses):
         adjClosePChanges = self.select("SELECT adjClosePChange FROM timeseriesdaily ORDER BY adjClosePChange ASC", ())
@@ -251,19 +264,41 @@ class DBManager:
             self.insert(query, args, many=True)
         print('Classes updated for field %s in table timeseriesdaily' % name)
 
-    def getLearningData(self, setFieldName, reqFields, reqNotNulls=[]):
+    def getLearningData(self, setFieldName, reqFields=[], reqNotNulls=[]):
+        if reqFields == []:
+            reqFields = self.getTimeseriesColumns()
+        if reqNotNulls == []:
+            reqNotNulls = reqFields
         setInfo = setFieldName.split('_')
+        wrds = False
         if setInfo[-1] == 'wrds':
             del setInfo[-1]
+            wrds = True
         noOfClasses = int(setInfo[0])
-        query = "SELECT `%s`" % setFieldName
-        for reqField in reqFields:
-            query += ", " + reqField
-        query += " FROM timeseriesdaily " \
-                 "WHERE `{0}` >= %s " \
-                 "AND `{0}` <= %s ".format(setFieldName)
-        for reqNotNull in reqNotNulls:
-            query += "AND " + reqNotNull + " IS NOT NULL "
+        if wrds:
+            fundamentalColumns = self.getFundamentalColumns()
+            query = "SELECT `%s`" % setFieldName
+            for reqField in reqFields:
+                query += ", " + reqField
+            for reqField in fundamentalColumns:
+                query += ", " + reqField
+            query += " FROM timeseriesdaily AS t " \
+                     "INNER JOIN fundamentals AS f " \
+                     "WHERE t.ticker = f.ticker " \
+                     "AND t.lastFundamental = f.public_date " \
+                     "AND `{0}` >= %s " \
+                     "AND `{0}` <= %s ".format(setFieldName)
+            for reqNotNull in reqNotNulls:
+                query += "AND " + reqNotNull + " IS NOT NULL "
+        else:
+            query = "SELECT `%s`" % setFieldName
+            for reqField in reqFields:
+                query += ", " + reqField
+            query += " FROM timeseriesdaily " \
+                     "WHERE `{0}` >= %s " \
+                     "AND `{0}` <= %s ".format(setFieldName)
+            for reqNotNull in reqNotNulls:
+                query += "AND " + reqNotNull + " IS NOT NULL "
         print('Getting training data...')
         trainX = np.array(self.select(query, (0, noOfClasses - 1)), np.float32)
         trainY = trainX[:, 0]
@@ -542,7 +577,9 @@ class DBManager:
         self.av.localBackup = priceHistory
 
     def readdAllStocks(self, readdFromMemory=True, storedOnDisk=False,
-                       columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']):
+                       columnsToSave=None):
+        if columnsToSave is None:
+            columnsToSave = self.classColumns
         tickersNSectors = self.select("SELECT ticker,sector FROM tickers", ())
         # Save a record of tickers and their sectors in case theres an exception when readding the stock
         if readdFromMemory:
@@ -591,7 +628,9 @@ class DBManager:
                 time.sleep(0.1)
 
     def readdStock(self, ticker, storedOnDisk=False, readdFromMemory=True,
-                   columnsToSave=['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']):
+                   columnsToSave=None):
+        if columnsToSave is None:
+            columnsToSave = self.classColumns
         sector = self.select("SELECT sector FROM tickers WHERE ticker=%s", (ticker,))[0][0]
         query = "SELECT ticker, date"
         for column in columnsToSave:
@@ -687,8 +726,7 @@ class DBManager:
         print("100% complete.")
 
     def updateFundamentals(self, tickers=None):
-        fundamentalColumns = self.select("DESC fundamentals", ())
-        fundamentalColumns = [feature for (feature, _, _, _, _, _) in fundamentalColumns][3:len(fundamentalColumns)]
+        fundamentalColumns = self.getFundamentalColumns()
         if tickers is None:
             print("Getting tickers from database...")
             tickers = [ticker for (ticker,) in self.select("SELECT ticker FROM tickers", ())]
