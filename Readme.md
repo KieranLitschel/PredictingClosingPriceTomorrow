@@ -21,6 +21,7 @@
     * [**Results of adding OBV and adjClose gradients**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-adding-obv-and-adjusted-close-gradients)
   * [**Adding fundamental ratios**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#adding-fundamental-ratios)
     * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#introduction-1)
+    * [**Cleaning up the data**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#cleaning-up-the-data)
     
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
