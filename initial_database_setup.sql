@@ -56,7 +56,7 @@ CREATE TABLE fundamentals
   short_debt     FLOAT      NULL,
   staff_sale     FLOAT      NULL,
   totdebt_invcap FLOAT      NULL,
-  CONSTRAINT fundamentals_permno_public_date_filledIn_pk
+  CONSTRAINT fundamentals_permno_public_date_pk
   UNIQUE (permno, public_date)
 )
   ENGINE = InnoDB;
