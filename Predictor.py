@@ -325,15 +325,19 @@ class Classifier:
                 accs = clf.score(self.validX, self.validY) * 100
             return accs
 
-    def evaluateBySKLRandomForest(self, n_estimators=100, max_features=3, min_samples_leaf=98, seed=0):
+    def evaluateBySKLRandomForest(self, n_estimators=100, max_features=3, min_samples_leaf=98, seed=0, getImportances=True):
         print("Running cross-validation...")
         rfc = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
                                      min_samples_leaf=min_samples_leaf, random_state=seed)
         scores = cross_val_score(rfc, self.trainX, self.trainY, n_jobs=self.coresToUse, cv=4)
         acc = np.mean(scores)
         std = np.std(scores)
-        print("Finding feature importances...")
-        rfc.n_jobs = self.coresToUse
-        rfc.fit(self.trainX, self.trainY)
-        featureImportances = rfc.feature_importances_
-        return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
+        if getImportances:
+            print("Finding feature importances...")
+            rfc.n_jobs = self.coresToUse
+            rfc.fit(self.trainX, self.trainY)
+            featureImportances = rfc.feature_importances_
+            return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
+        else:
+            return {'scores': scores, 'acc': acc, 'std': std}
+
