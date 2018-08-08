@@ -61,8 +61,8 @@ CREATE TABLE fundamentals
 )
   ENGINE = InnoDB;
 
-CREATE INDEX fundamentals_tickers_ticker_fk
-  ON fundamentals (ticker);
+CREATE INDEX fundamentals_ticker_public_date_index
+  ON fundamentals (ticker, public_date);
 
 CREATE TABLE tickers
 (
@@ -129,5 +129,11 @@ CREATE TABLE timeseriesdaily
   FOREIGN KEY (ticker) REFERENCES tickers (ticker)
 )
   ENGINE = InnoDB;
+
+CREATE INDEX timeseriesdaily_ticker_date_index
+  ON timeseriesdaily (ticker, date);
+
+CREATE INDEX timeseriesdaily_ticker_lastFundamental_index
+  ON timeseriesdaily (ticker, lastFundamental);
 
 
