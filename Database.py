@@ -688,7 +688,7 @@ class DBManager:
 
     def updateFundamentals(self, tickers=None):
         fundamentalColumns = self.select("DESC fundamentals", ())
-        fundamentalColumns = [feature for (feature, _, _, _, _, _) in fundamentalColumns][4:len(fundamentalColumns)]
+        fundamentalColumns = [feature for (feature, _, _, _, _, _) in fundamentalColumns][3:len(fundamentalColumns)]
         if tickers is None:
             print("Getting tickers from database...")
             tickers = [ticker for (ticker,) in self.select("SELECT ticker FROM tickers", ())]
@@ -706,31 +706,22 @@ class DBManager:
             for i in range(2, len(row)):
                 arg.append(row[i])
             fundamentalsArgs.append(arg)
-        query = "INSERT INTO fundamentals(permno,public_date,filledIn,ticker"
+        query = "INSERT INTO fundamentals(permno,public_date,ticker"
         for fundamentalColumn in fundamentalColumns:
             query += "," + fundamentalColumn
-        query += ") VALUES (%s,DATE(%s),0,%s" + (",%s" * len(fundamentalColumns)) + ")"
+        query += ") VALUES (%s,DATE(%s),%s" + (",%s" * len(fundamentalColumns)) + ")"
         print("Inserting fundamentals into database...")
         self.insert(query, fundamentalsArgs, many=True)
         self.removeRedundantPermnos()
-        print("Generating and inserting copy to fill in...")
-        copy = self.select("SELECT * FROM fundamentals", ())
-        for i in range(0, len(copy)):
-            copy[i] = list(copy[i])
-            copy[i][2] = 1
-            copy[i] = tuple(copy[i])
-        query = "INSERT INTO fundamentals VALUES (%s,DATE(%s),%s,%s" + (",%s" * len(fundamentalColumns)) + ")"
-        self.insert(query, copy, many=True)
         print("Filling in blank columns...")
         columnsToSetMaxIfNull = ["cash_ratio", "curr_ratio", "intcov_ratio", "ocf_lct", "profit_lct", "quick_ratio"]
         columnsToSetZerioIfNull = ["curr_debt", "int_debt", "int_totdebt"]
         for column in columnsToSetZerioIfNull:
-            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL AND filledIn=1" % (column, 0, column), ())
+            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL" % (column, 0, column), ())
         for column in columnsToSetMaxIfNull:
             max = int(self.select("SELECT MAX(%s) FROM fundamentals" % column, ())[0][0])
-            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL AND filledIn=1" % (column, max, column), ())
+            self.insert("UPDATE fundamentals SET %s=%s WHERE %s IS NULL" % (column, max, column), ())
         self.predictUnknownColumns(fundamentalColumns)
-        print("Finished updating fundamentals.")
 
     # Ensures that there is only one quote of fundamental ratios for each day
     def removeRedundantPermnos(self):
@@ -764,11 +755,16 @@ class DBManager:
 
     def predictUnknownColumns(self, fundamentalColumns):
         print("Predicting blank columns...")
-        query = "SELECT * FROM fundamentals WHERE filledIn=1"
+        query = "SELECT * FROM fundamentals WHERE "
+        first = True
         for column in fundamentalColumns:
-            query += " AND " + column + " IS NOT NULL"
+            if first:
+                query += column + " IS NOT NULL"
+                first = False
+            else:
+                query += " AND " + column + " IS NOT NULL"
         notNullRows = np.array(self.select(query, ()))
-        query = "SELECT * FROM fundamentals WHERE filledIn=1 AND ("
+        query = "SELECT * FROM fundamentals WHERE "
         first = True
         for fundamentalColumn in fundamentalColumns:
             if first:
@@ -776,21 +772,20 @@ class DBManager:
                 first = False
             else:
                 query += " OR " + fundamentalColumn + " IS NULL "
-        query += ")"
         rows = np.array(self.select(query, ()))
         count = 0
         nullCols = {}
         for row in rows:
             nullColumns = []
             notNullColumns = []
-            for i in range(4, len(row)):
+            for i in range(3, len(row)):
                 if row[i] is None:
                     nullColumns.append(i)
                 else:
                     notNullColumns.append(i)
             name = ""
             for column in nullColumns:
-                name += fundamentalColumns[column - 4] + ","
+                name += fundamentalColumns[column - 3] + ","
             if nullCols.get(name) is None:
                 nullCols[name] = [row]
             else:
@@ -800,7 +795,7 @@ class DBManager:
             row = nullCols[key][0]
             nullColumns = []
             notNullColumns = []
-            for i in range(4, len(row)):
+            for i in range(3, len(row)):
                 if row[i] is None:
                     nullColumns.append(i)
                 else:
@@ -825,10 +820,10 @@ class DBManager:
             first = True
             for columnNo in nullColumns:
                 if first:
-                    query += fundamentalColumns[columnNo - 4] + "=%s"
+                    query += fundamentalColumns[columnNo - 3] + "=%s"
                     first = False
                 else:
-                    query += ", " + fundamentalColumns[columnNo - 4] + "=%s"
-            query += " WHERE permno=%s AND public_date=%s AND filledIn=1"
+                    query += ", " + fundamentalColumns[columnNo - 3] + "=%s"
+            query += " WHERE permno=%s AND public_date=%s"
             self.insert(query, args, many=True, dialog=False)
             count += 1
