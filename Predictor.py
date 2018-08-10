@@ -71,7 +71,7 @@ class Classifier:
         self.coresToUse = coresToUse
 
 
-class KNNClassifier(Classifier):
+class KNNClassifierMethods(Classifier):
 
     def __init__(self, trainX, trainY, testX, testY, coresToUse=6):
         Classifier.__init__(self, trainX, trainY, testX, testY, coresToUse=coresToUse)
@@ -130,7 +130,7 @@ class KNNClassifier(Classifier):
             return neigh.score(self.testX, self.testY) * 100
 
 
-class LogisticRegressionClassifer(Classifier):
+class LogisticRegressionClassiferMethods(Classifier):
     def __init__(self, trainX, trainY, testX, testY, noOfClasses, coresToUse=6):
         Classifier.__init__(self, trainX, trainY, testX, testY, noOfClasses=noOfClasses, coresToUse=coresToUse)
 
@@ -187,7 +187,7 @@ class LogisticRegressionClassifer(Classifier):
         train_writer.close()
 
 
-class RandomForestClassifier(Classifier):
+class RandomForestClassifierMethods(Classifier):
 
     def __init__(self, trainX, trainY, testX, testY, validX=None, validY=None, noOfClasses=None, coresToUse=6):
         Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, noOfClasses, coresToUse)
@@ -358,3 +358,5 @@ class RandomForestClassifier(Classifier):
             return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
         else:
             return {'scores': scores, 'acc': acc, 'std': std}
+
+def NeuralNetworkClassifier(Classifier):
