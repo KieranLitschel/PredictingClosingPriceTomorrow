@@ -70,6 +70,12 @@ class Classifier:
         self.noOfClasses = noOfClasses
         self.coresToUse = coresToUse
 
+
+class KNNClassifier(Classifier):
+
+    def __init__(self, trainX, trainY, testX, testY, coresToUse=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, coresToUse=coresToUse)
+
     def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True,
                              graphIt=True, graphTitle=""):
         results = {}
@@ -123,6 +129,11 @@ class Classifier:
         else:
             return neigh.score(self.testX, self.testY) * 100
 
+
+class LogisticRegressionClassifer(Classifier):
+    def __init__(self, trainX, trainY, testX, testY, noOfClasses, coresToUse=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, noOfClasses=noOfClasses, coresToUse=coresToUse)
+
     # This method is based off the template from the sample code of the book Tensorflow for Deep Learning
     def classifyByLogRegRiseOrFall(self, name, n_steps, learningRate):
         # Generate tensorflow graph
@@ -174,6 +185,12 @@ class Classifier:
         print("Test Set Accuracy: %f" % score)
 
         train_writer.close()
+
+
+class RandomForestClassifier(Classifier):
+
+    def __init__(self, trainX, trainY, testX, testY, validX=None, validY=None, noOfClasses=None, coresToUse=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, noOfClasses, coresToUse)
 
     # Note that tensor_forest is not supported on windows in the build of tensorflow I used in this project, so this method not well tested
     def classifyByTFRandomForest(self, noOfEpochs, n_estimators, maxNoOfNodes):
@@ -325,7 +342,8 @@ class Classifier:
                 accs = clf.score(self.validX, self.validY) * 100
             return accs
 
-    def evaluateBySKLRandomForest(self, n_estimators=100, max_features=3, min_samples_leaf=98, seed=0, getImportances=True):
+    def evaluateBySKLRandomForest(self, n_estimators=100, max_features=3, min_samples_leaf=98, seed=0,
+                                  getImportances=True):
         print("Running cross-validation...")
         rfc = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
                                      min_samples_leaf=min_samples_leaf, random_state=seed)
@@ -340,4 +358,3 @@ class Classifier:
             return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
         else:
             return {'scores': scores, 'acc': acc, 'std': std}
-
