@@ -390,13 +390,12 @@ class NeuralNetworkClassifierMethods(Classifier):
                 x_hidden = tf.nn.relu(tf.matmul(x, W) + b)
                 if dropout:
                     x_hidden = tf.nn.dropout(x_hidden, dropout_prob)
-            y_one_prob = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, layer_no + 1, dropout, dropout_prob)
+            y_logit = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, layer_no + 1, dropout, dropout_prob)
         else:
             num_in = num_ins[-1]
             with tf.name_scope("output layer"):
                 W = tf.Variable(tf.random_normal((num_in, 1)))
                 b = tf.Variable(tf.random_normal((1,)))
                 y_logit = tf.matmul(x, W) + b
-                y_one_prob = tf.sigmoid(y_logit)
-        return y_one_prob
+        return y_logit
 
