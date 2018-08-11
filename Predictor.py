@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import math
 from sklearn.model_selection import cross_val_score
+import datetime
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -390,7 +391,7 @@ class NeuralNetworkClassifierMethods(Classifier):
                 x_hidden = tf.nn.relu(tf.matmul(x, W) + b)
                 if dropout:
                     x_hidden = tf.nn.dropout(x_hidden, dropout_prob)
-            y_logit = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, layer_no + 1, dropout, dropout_prob)
+            y_logit = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, dropout, dropout_prob, layer_no + 1)
         else:
             num_in = num_ins[-1]
             with tf.name_scope("output layer"):
@@ -398,4 +399,80 @@ class NeuralNetworkClassifierMethods(Classifier):
                 b = tf.Variable(tf.random_normal((1,)))
                 y_logit = tf.matmul(x, W) + b
         return y_logit
+
+    # See buildLayers commentry for what variables mean, the only difference is in num_ins, index i should contain the
+    # number of neurons in layer i
+
+    def trainModelWithMinibatches(self, learning_rate, n_epochs, batch_size, num_ins, layers_to_build, dropout=False,
+                                  dropout_prob=0.5):
+        d = self.trainX.shape[1]
+        num_ins = [d] + num_ins
+
+        with tf.name_scope("placeholders"):
+            x = tf.placeholder(tf.float32, (None, d))
+            y = tf.placeholder(tf.float32, (None,))
+            if dropout:
+                keep_prob = tf.placeholder(tf.float32)
+        y_logit = self.buildLayers(x, num_ins, layers_to_build, dropout, dropout_prob)
+        with tf.name_scope("output layer"):
+            y_logit = y_logit
+            y_one_prob = tf.sigmoid(y_logit)
+            y_pred = tf.round(y_one_prob)
+        with tf.name_scope("loss"):
+            y_expand = tf.expand_dims(y, 1)
+            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=y_expand)
+            l = tf.reduce_sum(entropy)
+
+        with tf.name_scope("optim"):
+            train_op = tf.train.AdamOptimizer(learning_rate).minimize(l)
+
+        with tf.name_scope("summaries"):
+            tf.summary.scalar("loss", l)
+            merged = tf.summary.merge_all()
+
+        date = str(datetime.datetime.now()).split(" ")[0]
+        time = str(datetime.datetime.now()).split(" ")[1].split(".")[0].replace(":", "-")
+        if "." in str(learning_rate):
+            str_learning_rate = str(learning_rate).split(".")[1]
+        else:
+            str_learning_rate = str(learning_rate)
+        name = date + "_" + time + "_" + str_learning_rate + "_" + str(n_epochs) + "_" + str(batch_size) + "_" + str(
+            num_ins[1:len(num_ins)]) + "_" + str(layers_to_build)
+        train_writer = tf.summary.FileWriter('/TensorFlow/predclosepricetomorrow/' + name, tf.get_default_graph())
+
+        N = self.trainX.shape[0]
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            step = 0
+            for epoch in range(n_epochs):
+                pos = 0
+                while pos < N:
+                    batch_X = self.trainX[pos:pos + batch_size]
+                    batch_Y = self.trainY[pos:pos + batch_size]
+                    if dropout:
+                        feed_dict = {x: batch_X, y: batch_Y, keep_prob: dropout_prob}
+                    else:
+                        feed_dict = {x: batch_X, y: batch_Y}
+                    _, summary, loss = sess.run([train_op, merged, l], feed_dict=feed_dict)
+                    train_writer.add_summary(summary, step)
+
+                    step += 1
+                    pos += batch_size
+
+            if dropout:
+                train_y_pred = sess.run(y_pred, feed_dict={x: self.trainX, keep_prob: 1.0})
+                valid_y_pred = sess.run(y_pred, feed_dict={x: self.validX, keep_prob: 1.0})
+                test_y_pred = sess.run(y_pred, feed_dict={x: self.testX, keep_prob: 1.0})
+            else:
+                train_y_pred = sess.run(y_pred, feed_dict={x: self.trainX})
+                valid_y_pred = sess.run(y_pred, feed_dict={x: self.validX})
+                test_y_pred = sess.run(y_pred, feed_dict={x: self.testX})
+
+        train_weighted_score = accuracy_score(self.trainY, train_y_pred)
+        print("Train Weighted Classification Accuracy: %f" % train_weighted_score)
+        valid_weighted_score = accuracy_score(self.validY, valid_y_pred)
+        print("Valid Weighted Classification Accuracy: %f" % valid_weighted_score)
+        test_weighted_score = accuracy_score(self.testY, test_y_pred)
+        print("Test Weighted Classification Accuracy: %f" % test_weighted_score)
+
 
