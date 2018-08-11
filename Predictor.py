@@ -2,6 +2,7 @@ import time
 from sklearn.neighbors import KNeighborsClassifier
 from matplotlib import pyplot as plt
 import tensorflow as tf
+from tensorflow import keras
 from sklearn.metrics import accuracy_score
 from tensorflow.contrib.tensor_forest.python import tensor_forest
 from tensorflow.python.ops import resources
@@ -43,7 +44,7 @@ def RandomSearchCVToCSV(RSCV):
 
 
 class Classifier:
-    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, coresToUse=6,
+    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, n_jobs=6,
                  usePOfData=100):
         if usePOfData == 100:
             self.trainX = trainX
@@ -68,13 +69,13 @@ class Classifier:
                 self.validY = validY[cValid]
         self.noOfFeatures = self.trainX.shape[1]
         self.noOfClasses = noOfClasses
-        self.coresToUse = coresToUse
+        self.n_jobs = n_jobs
 
 
 class KNNClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX, testY, coresToUse=6):
-        Classifier.__init__(self, trainX, trainY, testX, testY, coresToUse=coresToUse)
+    def __init__(self, trainX, trainY, testX, testY, n_jobs=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, n_jobs=n_jobs)
 
     def classifyByKnnInRange(self, ks, returnPredictions=False, returnAccuracy=True, printProgress=True, printTime=True,
                              graphIt=True, graphTitle=""):
@@ -82,7 +83,7 @@ class KNNClassifierMethods(Classifier):
         for i in ks:
             print('Trying k=%s' % i)
             start = time.time()
-            result = self.classifyByKnn(i, returnPredictions, returnAccuracy, printProgress=False, coresToUse=4)
+            result = self.classifyByKnn(i, returnPredictions, returnAccuracy, printProgress=False, n_jobs=4)
             if printTime:
                 print('Took %.1f seconds.' % (time.time() - start))
             results[i] = result
@@ -106,7 +107,7 @@ class KNNClassifierMethods(Classifier):
         return results
 
     def classifyByKnn(self, k, returnPredictions=True, returnAccuracy=False, printProgress=True):
-        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=self.coresToUse)
+        neigh = KNeighborsClassifier(n_neighbors=k, algorithm="auto", n_jobs=self.n_jobs)
         if printProgress:
             print("Fitting training data...")
         neigh.fit(self.trainX, self.trainY)
@@ -131,8 +132,8 @@ class KNNClassifierMethods(Classifier):
 
 
 class LogisticRegressionClassiferMethods(Classifier):
-    def __init__(self, trainX, trainY, testX, testY, noOfClasses, coresToUse=6):
-        Classifier.__init__(self, trainX, trainY, testX, testY, noOfClasses=noOfClasses, coresToUse=coresToUse)
+    def __init__(self, trainX, trainY, testX, testY, noOfClasses, n_jobs=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, noOfClasses=noOfClasses, n_jobs=n_jobs)
 
     # This method is based off the template from the sample code of the book Tensorflow for Deep Learning
     def classifyByLogRegRiseOrFall(self, name, n_steps, learningRate):
@@ -189,8 +190,8 @@ class LogisticRegressionClassiferMethods(Classifier):
 
 class RandomForestClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX, testY, validX=None, validY=None, noOfClasses=None, coresToUse=6):
-        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, noOfClasses, coresToUse)
+    def __init__(self, trainX, trainY, testX, testY, validX=None, validY=None, noOfClasses=None, n_jobs=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, noOfClasses, n_jobs)
 
     # Note that tensor_forest is not supported on windows in the build of tensorflow I used in this project, so this method not well tested
     def classifyByTFRandomForest(self, noOfEpochs, n_estimators, maxNoOfNodes):
@@ -308,7 +309,7 @@ class RandomForestClassifierMethods(Classifier):
                                   returnAccuracy=True, returnPredictions=False, predictTest=True, minSamplesSplit=2,
                                   bootstrap=True, maxDepth=None):
         clf = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
-                                     n_jobs=self.coresToUse, random_state=seed, min_samples_leaf=min_samples_leaf,
+                                     n_jobs=self.n_jobs, random_state=seed, min_samples_leaf=min_samples_leaf,
                                      min_samples_split=minSamplesSplit, bootstrap=bootstrap, max_depth=maxDepth)
         if printProgress:
             print("Generating forest...")
@@ -347,16 +348,55 @@ class RandomForestClassifierMethods(Classifier):
         print("Running cross-validation...")
         rfc = RandomForestClassifier(n_estimators=n_estimators, max_features=max_features,
                                      min_samples_leaf=min_samples_leaf, random_state=seed)
-        scores = cross_val_score(rfc, self.trainX, self.trainY, n_jobs=self.coresToUse, cv=4)
+        scores = cross_val_score(rfc, self.trainX, self.trainY, n_jobs=self.n_jobs, cv=4)
         acc = np.mean(scores)
         std = np.std(scores)
         if getImportances:
             print("Finding feature importances...")
-            rfc.n_jobs = self.coresToUse
+            rfc.n_jobs = self.n_jobs
             rfc.fit(self.trainX, self.trainY)
             featureImportances = rfc.feature_importances_
             return {'scores': scores, 'acc': acc, 'std': std, 'featureImportances': featureImportances}
         else:
             return {'scores': scores, 'acc': acc, 'std': std}
 
-def NeuralNetworkClassifier(Classifier):
+
+class NeuralNetworkClassifierMethods(Classifier):
+
+    def __init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=6):
+        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs)
+
+    # x should be a 2d placeholder that will take mini-batches
+    # num_ins should be a list of at least length 2 specifying the number of neurons in each layer, the first element in
+    #     the list should always be the number of features in the training set, if you want the same number of neurons
+    #     in each layer you only need to add the number once to the list, if you want to have different numbers to each
+    #     of n hidden-layers index i+1 of num_ins should contain the number of neurons in layer i, where layers are labelled
+    #     0 to n-1
+    # dropout should be set to true if you would like dropout
+    # dropout_pron only has an effect when dropout is true, and determines the probability a node is dropped in the layer
+    # layer_no should not be set, this is set in the recursive calls
+
+    def buildLayers(self, x, num_ins, layers_to_build, dropout=False, dropout_prob=0.5, layer_no=0):
+        if layers_to_build != 0:
+            with tf.name_scope("hidden-layer-" + str(layer_no)):
+                if len(num_ins) > 2:
+                    num_in = num_ins[layer_no]
+                    num_neurons_in_layer = num_ins[layer_no + 1]
+                else:
+                    num_in = num_ins[0]
+                    num_neurons_in_layer = num_ins[1]
+                W = tf.Variable(tf.random_normal((num_in, num_neurons_in_layer)))
+                b = tf.Variable(tf.random_normal((num_neurons_in_layer,)))
+                x_hidden = tf.nn.relu(tf.matmul(x, W) + b)
+                if dropout:
+                    x_hidden = tf.nn.dropout(x_hidden, dropout_prob)
+            y_one_prob = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, layer_no + 1, dropout, dropout_prob)
+        else:
+            num_in = num_ins[-1]
+            with tf.name_scope("output layer"):
+                W = tf.Variable(tf.random_normal((num_in, 1)))
+                b = tf.Variable(tf.random_normal((1,)))
+                y_logit = tf.matmul(x, W) + b
+                y_one_prob = tf.sigmoid(y_logit)
+        return y_one_prob
+
