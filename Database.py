@@ -64,7 +64,7 @@ class DBManager:
                 self.jobs = 1
         else:
             self.jobs = n_jobs
-        self.classColumns = ['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`']
+        self.classColumns = ['`4_80_20`', '`2_80_20`', '`4_60_20_20`', '`4_60_20_20_wrds`', '`2_60_20_20_wrds`']
 
     def insert(self, query, args, many=False, dialog=True):
         try:
@@ -266,6 +266,7 @@ class DBManager:
 
     def getLearningData(self, setFieldName, reqFields=[], reqNotNulls=[], fundamentalColumns=None):
         if reqFields == []:
+            print("WARNING: Make sure class columns is up to date, otherwise classes will be fed as features")
             reqFields = self.getTimeseriesColumns()
         if reqNotNulls == []:
             reqNotNulls = reqFields
