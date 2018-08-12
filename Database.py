@@ -266,7 +266,7 @@ class DBManager:
 
     def getLearningData(self, setFieldName, reqFields=[], reqNotNulls=[], fundamentalColumns=None):
         if reqFields == []:
-            print("WARNING: Make sure class columns is up to date, otherwise classes will be fed as features")
+            print("WARNING: Make sure variable class columns in the constructor is up to date, otherwise classes will be fed as features")
             reqFields = self.getTimeseriesColumns()
         if reqNotNulls == []:
             reqNotNulls = reqFields
