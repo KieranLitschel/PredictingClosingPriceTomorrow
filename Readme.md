@@ -323,3 +323,9 @@ I managed to, but I only achieved around a 0.01% increase in accuracy. As a resu
 The top 10 results of 26 are displayed below, and somewhat unsurprisingly we only gained an increase 0.1% in accuracy, suggesting that we have exhausted any increase we can get from random forests. 
 
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20selected%20ratios%20extended%20search.PNG" alt="Table of results of extended search of retuning hyperparameters with selected ratios" style="width: 10px;"/>
+
+## Predicting using neural networks
+
+I've decided to train the neural network in TensorFlow as it is a modern library that will integrate well with training using Google Compute. I've experimented with low-level TensorFlow and Keras, and decided that Keras is most appropriate for this project as it will allow me to adjust the model quickly. 
+
+To start with I'll use the Adam optimizer, as this seems like the simplest optimizer to tune, so once I feel I have squeezed as much as I can out of the optimizer I'll experiment with others.
