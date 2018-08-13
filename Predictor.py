@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import math
 from sklearn.model_selection import cross_val_score
-import datetime
+from sklearn.model_selection import RandomizedSearchCV
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -366,113 +366,55 @@ class NeuralNetworkClassifierMethods(Classifier):
 
     def __init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=6):
         Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs)
+        self.trainY = keras.utils.to_categorical(trainY)
+        self.validY = keras.utils.to_categorical(validY)
+        self.testY = keras.utils.to_categorical(testY)
 
-    # x should be a 2d placeholder that will take mini-batches
-    # num_ins should be a list of at least length 2 specifying the number of neurons in each layer, the first element in
-    #     the list should always be the number of features in the training set, if you want the same number of neurons
-    #     in each layer you only need to add the number once to the list, if you want to have different numbers to each
-    #     of n hidden-layers index i+1 of num_ins should contain the number of neurons in layer i, where layers are labelled
-    #     0 to n-1
-    # dropout should be set to true if you would like dropout
-    # dropout_pron only has an effect when dropout is true, and determines the probability a node is dropped in the layer
-    # layer_no should not be set, this is set in the recursive calls
-
-    def buildLayers(self, x, num_ins, layers_to_build, dropout=False, dropout_prob=0.5, layer_no=0):
-        if layers_to_build != 0:
-            with tf.name_scope("hidden-layer-" + str(layer_no)):
-                if len(num_ins) > 2:
-                    num_in = num_ins[layer_no]
-                    num_neurons_in_layer = num_ins[layer_no + 1]
-                else:
-                    num_in = num_ins[0]
-                    num_neurons_in_layer = num_ins[1]
-                W = tf.Variable(tf.random_normal((num_in, num_neurons_in_layer)))
-                b = tf.Variable(tf.random_normal((num_neurons_in_layer,)))
-                x_hidden = tf.nn.relu(tf.matmul(x, W) + b)
-                if dropout:
-                    x_hidden = tf.nn.dropout(x_hidden, dropout_prob)
-            y_logit = self.buildLayers(x_hidden, num_ins, layers_to_build - 1, dropout, dropout_prob, layer_no + 1)
-        else:
-            num_in = num_ins[-1]
-            with tf.name_scope("output layer"):
-                W = tf.Variable(tf.random_normal((num_in, 1)))
-                b = tf.Variable(tf.random_normal((1,)))
-                y_logit = tf.matmul(x, W) + b
-        return y_logit
-
-    # See buildLayers commentry for what variables mean, the only difference is in num_ins, index i should contain the
-    # number of neurons in layer i
-
-    def trainModelWithMinibatches(self, learning_rate, n_epochs, batch_size, num_ins, layers_to_build, dropout=False,
-                                  dropout_prob=0.5):
-        d = self.trainX.shape[1]
-        num_ins = [d] + num_ins
-
-        with tf.name_scope("placeholders"):
-            x = tf.placeholder(tf.float32, (None, d))
-            y = tf.placeholder(tf.float32, (None,))
-            if dropout:
-                keep_prob = tf.placeholder(tf.float32)
-        y_logit = self.buildLayers(x, num_ins, layers_to_build, dropout, dropout_prob)
-        with tf.name_scope("output layer"):
-            y_logit = y_logit
-            y_one_prob = tf.sigmoid(y_logit)
-            y_pred = tf.round(y_one_prob)
-        with tf.name_scope("loss"):
-            y_expand = tf.expand_dims(y, 1)
-            entropy = tf.nn.sigmoid_cross_entropy_with_logits(logits=y_logit, labels=y_expand)
-            l = tf.reduce_sum(entropy)
-
-        with tf.name_scope("optim"):
-            train_op = tf.train.AdamOptimizer(learning_rate).minimize(l)
-
-        with tf.name_scope("summaries"):
-            tf.summary.scalar("loss", l)
-            merged = tf.summary.merge_all()
-
-        date = str(datetime.datetime.now()).split(" ")[0]
-        time = str(datetime.datetime.now()).split(" ")[1].split(".")[0].replace(":", "-")
-        if "." in str(learning_rate):
-            str_learning_rate = str(learning_rate).split(".")[1]
-        else:
-            str_learning_rate = str(learning_rate)
-        name = date + "_" + time + "_" + str_learning_rate + "_" + str(n_epochs) + "_" + str(batch_size) + "_" + str(
-            num_ins[1:len(num_ins)]) + "_" + str(layers_to_build)
-        train_writer = tf.summary.FileWriter('/TensorFlow/predclosepricetomorrow/' + name, tf.get_default_graph())
-
-        N = self.trainX.shape[0]
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            step = 0
-            for epoch in range(n_epochs):
-                pos = 0
-                while pos < N:
-                    batch_X = self.trainX[pos:pos + batch_size]
-                    batch_Y = self.trainY[pos:pos + batch_size]
-                    if dropout:
-                        feed_dict = {x: batch_X, y: batch_Y, keep_prob: dropout_prob}
-                    else:
-                        feed_dict = {x: batch_X, y: batch_Y}
-                    _, summary, loss = sess.run([train_op, merged, l], feed_dict=feed_dict)
-                    train_writer.add_summary(summary, step)
-
-                    step += 1
-                    pos += batch_size
-
-            if dropout:
-                train_y_pred = sess.run(y_pred, feed_dict={x: self.trainX, keep_prob: 1.0})
-                valid_y_pred = sess.run(y_pred, feed_dict={x: self.validX, keep_prob: 1.0})
-                test_y_pred = sess.run(y_pred, feed_dict={x: self.testX, keep_prob: 1.0})
+    def create_model(self, layers):
+        model = keras.Sequential()
+        first = True
+        i = 0
+        for layer in layers:
+            if layer.L2:
+                reg = keras.regularizers.l2(layer.lmbda)
             else:
-                train_y_pred = sess.run(y_pred, feed_dict={x: self.trainX})
-                valid_y_pred = sess.run(y_pred, feed_dict={x: self.validX})
-                test_y_pred = sess.run(y_pred, feed_dict={x: self.testX})
+                reg = keras.regularizers.l1(layer.lmbda)
+            if first:
+                model.add(keras.layers.Dense(layer.neurons, activation=layer.activation, kernel_regularizer=reg,
+                                             input_shape=(self.trainX.shape[1],), name="Layer-" + str(i)))
+                first = False
+            else:
+                model.add(keras.layers.Dense(layer.neurons, activation=layer.activation, kernel_regularizer=reg,
+                                             name="Layer-" + str(i)))
+            model.add(keras.layers.Dropout(0.5, name="dropout-" + str(i)))
+            i += 1
+        model.add(keras.layers.Dense(4, activation=tf.nn.softmax, name="output"))
+        model.compile(optimizer='adam', loss='categorical_crossentropy',
+                      metrics=['accuracy'])
+        return model
 
-        train_weighted_score = accuracy_score(self.trainY, train_y_pred)
-        print("Train Weighted Classification Accuracy: %f" % train_weighted_score)
-        valid_weighted_score = accuracy_score(self.validY, valid_y_pred)
-        print("Valid Weighted Classification Accuracy: %f" % valid_weighted_score)
-        test_weighted_score = accuracy_score(self.testY, test_y_pred)
-        print("Test Weighted Classification Accuracy: %f" % test_weighted_score)
+    def create_single_layer_model(self, L2, lmbda, neurons, activation):
+        layers = [self.CustomLayer(L2, lmbda, neurons, activation)]
+        return self.create_model(layers)
 
+    def random_search_single_layer(self, seed=0, verbose=2):
+        model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
+        batch_sizes = [128, 256, 512, 1024]
+        epochs = [10, 100, 500, 1000]
+        L2s = [True, False]
+        lmbdas = [0.1, 0.01, 0.001]
+        neurons = range(2, 2 * self.trainX.shape[1])
+        activations = [tf.nn.softmax, tf.nn.sigmoid, tf.nn.tanh, tf.nn.relu]
+        param_dist = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
+                          epochs=epochs)
+        rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=5, cv=4, random_state=seed,
+                                  verbose=verbose)
+        rscv.fit(self.trainX, self.trainY)
+        return rscv
 
+    class CustomLayer:
+        def __init__(self, L2, lmbda, neurons, activation):
+            self.L2 = L2
+            self.lmbda = lmbda
+            self.neurons = neurons
+            self.activation = activation
