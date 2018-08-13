@@ -319,3 +319,13 @@ Clearly the default parameters we used in previous experiments, but even after r
 <img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20selected%20ratios.PNG" alt="Table of results of retuning hyperparameters with selected ratios" style="width: 10px;"/>
 
 I managed to, but I only achieved around a 0.01% increase in accuracy. As a result of this I suspect I have exhausted any improvement in accuracy I can gain using random forests. As a result I will now focus on building a neural network, but as a final experiment I will try using a much larger range of estimators and features when building the random forests, experimenting with between 500 and 1000 estimators, and 6 to 17 maximum features at each split. Training these and evaluating them using 4-fold cross validation will take a lot of time, so I will make use of Google Compute Engine and run this experiment on the cloud in virtual machines.
+
+The top 10 results of 26 are displayed below, and somewhat unsurprisingly we only gained an increase 0.1% in accuracy, suggesting that we have exhausted any increase we can get from random forests. 
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20selected%20ratios%20extended%20search.PNG" alt="Table of results of extended search of retuning hyperparameters with selected ratios" style="width: 10px;"/>
+
+## Predicting using neural networks
+
+I've decided to train the neural network in TensorFlow as it is a modern library that will integrate well with training using Google Compute. I've experimented with low-level TensorFlow and Keras, and decided that Keras is most appropriate for this project as it will allow me to adjust the model quickly. 
+
+To start with I'll use the Adam optimizer, as this seems like the simplest optimizer to tune, so once I feel I have squeezed as much as I can out of the optimizer I'll experiment with others.
