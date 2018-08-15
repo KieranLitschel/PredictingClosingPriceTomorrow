@@ -364,11 +364,18 @@ class RandomForestClassifierMethods(Classifier):
 
 class NeuralNetworkClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=6):
+    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=6, memory_frac=0.4):
         Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs)
         self.trainY = keras.utils.to_categorical(trainY)
-        self.validY = keras.utils.to_categorical(validY)
-        self.testY = keras.utils.to_categorical(testY)
+        if validX is not None:
+            self.validY = keras.utils.to_categorical(validY)
+        if testX is not None:
+            self.testY = keras.utils.to_categorical(testY)
+        if memory_frac != 1:
+            keras.backend.clear_session()
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_frac)
+            sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+            keras.backend.set_session(sess)
 
     def create_model(self, layers):
         model = keras.Sequential()
@@ -397,17 +404,18 @@ class NeuralNetworkClassifierMethods(Classifier):
         layers = [self.CustomLayer(L2, lmbda, neurons, activation)]
         return self.create_model(layers)
 
-    def random_search_single_layer(self, seed=0, verbose=2):
+    def random_search_single_layer(self, seed=0, verbose=2, n_iter=5):
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
-        batch_sizes = [128, 256, 512, 1024]
-        epochs = [10, 100, 500, 1000]
+        batch_sizes = [128, 256, 512, 768, 1024]
+        epochs = [10, 50, 100, 200, 300, 400, 500]
         L2s = [True, False]
-        lmbdas = [0.1, 0.01, 0.001]
+        lmbdas = [0.5, 0.1, 0.05, 0.01, 0.005, 0.001]
         neurons = range(2, 2 * self.trainX.shape[1])
         activations = [tf.nn.softmax, tf.nn.sigmoid, tf.nn.tanh, tf.nn.relu]
         param_dist = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs)
-        rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=5, cv=4, random_state=seed,
+        rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter, cv=4,
+                                  random_state=seed,
                                   verbose=verbose)
         rscv.fit(self.trainX, self.trainY)
         return rscv
