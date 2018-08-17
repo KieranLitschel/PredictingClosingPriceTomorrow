@@ -428,6 +428,8 @@ class NeuralNetworkClassifierMethods(Classifier):
         return self.create_model(layers)
 
     def random_search_single_layer(self, seed=0, verbose=2, n_iter=5):
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
         batch_sizes = [128, 256, 512, 768, 1024]
         epochs = [10, 50, 100, 200, 300, 400, 500]
@@ -443,11 +445,14 @@ class NeuralNetworkClassifierMethods(Classifier):
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
-    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, verbose=2):
+    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, verbose=2, seed=0):
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs)
         gscv = GridSearchCV(estimator=model, param_grid=param_grid, cv=4, verbose=verbose, refit=False)
+        gscv.fit(self.trainX, self.trainY)
         return gscv
 
     def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
@@ -457,6 +462,8 @@ class NeuralNetworkClassifierMethods(Classifier):
         return self.create_model(layers)
 
     def random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
+        np.random.seed(seed)
+        tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_two_layer_model, verbose=0)
         batch_sizes = [128, 256, 512, 768, 1024]
         epochs = [10, 50, 100, 200, 300, 400, 500]
