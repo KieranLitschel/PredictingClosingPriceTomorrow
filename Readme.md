@@ -329,4 +329,4 @@ The top 10 results of 26 are displayed below, and somewhat unsurprisingly we onl
 
 I've decided to train the neural network in TensorFlow as it is a modern library that will integrate well with training using Google Compute. I've experimented with low-level TensorFlow and Keras, and decided that Keras is most appropriate for this project as it will allow me to adjust the model quickly. 
 
-To start with I'll use the Adam optimizer, as this seems like the simplest optimizer to tune, so once I feel I have squeezed as much as I can out of the optimizer I'll experiment with others.
+To start with I used the Adam optimizer, as this seemed like the simplest optimizer to tune. I also started with a single layer neural network, as this is simplest to optimize. I started by running 60 iterations of RandomizedSearchCV experimenting with modifying the number of neurons and epochs, the activation function, the batch size, whether to use L1 or L2 regularization, and what value of lambda to use for regularization.
