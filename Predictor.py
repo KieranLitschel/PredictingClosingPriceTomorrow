@@ -11,6 +11,7 @@ import numpy as np
 import math
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -25,6 +26,24 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
     plt.plot(ks, yWith, color='blue', label='With ' + addedFeature)
     plt.plot(ks, yWithout, color='red', label='Without ' + addedFeature)
     plt.legend()
+    plt.show()
+
+
+def graphChangeInAccs(values, accuracies, stds, xlbl):
+    fig, ax1 = plt.subplots()
+    ax1.plot(values, accuracies, 'r')
+    ax1.set_xlabel(xlbl)
+    ax1.set_ylabel('Average accuracy using 4-fold CV (%)', color='r')
+    ax1.tick_params('y', colors='r')
+
+    ax2 = ax1.twinx()
+    ax2.plot(values, stds, 'b')
+    ax2.set_ylabel('Standard deviation of accuracy using 4-fold CV (%)', color='b')
+    ax2.tick_params('y', colors='b')
+
+    fig.tight_layout()
+    fig.set_size_inches(8, 6, forward=True)
+    plt.title("Effect of changing " + xlbl)
     plt.show()
 
 
@@ -423,6 +442,13 @@ class NeuralNetworkClassifierMethods(Classifier):
                                   verbose=verbose, refit=False)
         rscv.fit(self.trainX, self.trainY)
         return rscv
+
+    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, verbose=2):
+        model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
+        param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
+                          epochs=epochs)
+        gscv = GridSearchCV(estimator=model, param_grid=param_grid, cv=4, verbose=verbose, refit=False)
+        return gscv
 
     def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
                                sndActivation):
