@@ -45,7 +45,7 @@ def RandomSearchCVToCSV(RSCV):
 
 
 class Classifier:
-    def __init__(self, trainX, trainY, testX, testY=None, validX=None, validY=None, noOfClasses=None, n_jobs=6,
+    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, noOfClasses=None, n_jobs=6,
                  usePOfData=100):
         if usePOfData == 100:
             self.trainX = trainX
@@ -58,11 +58,14 @@ class Classifier:
             np.random.seed(0)
             cTrain = np.random.choice(len(trainX), size=int(math.floor(len(trainX) * (usePOfData / 100))),
                                       replace=False)
-            cTest = np.random.choice(len(testX), size=int(math.floor(len(testX) * (usePOfData / 100))), replace=False)
             self.trainX = trainX[cTrain]
             self.trainY = trainY[cTrain]
-            self.testX = testX[cTest]
-            self.testY = testY[cTest]
+            if testX is not None:
+                cTest = np.random.choice(len(testX), size=int(math.floor(len(testX) * (usePOfData / 100))),
+                                         replace=False)
+                self.testX = testX[cTest]
+                if testY is not None:
+                    self.testY = testY[cTest]
             if validX is not None:
                 cValid = np.random.choice(len(validX), size=int(math.floor(len(validX) * (usePOfData / 100))),
                                           replace=False)
@@ -364,13 +367,14 @@ class RandomForestClassifierMethods(Classifier):
 
 class NeuralNetworkClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=6, memory_frac=0.4):
-        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs)
-        self.trainY = keras.utils.to_categorical(trainY)
+    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=6, memory_frac=0.4,
+                 usePOfData=100):
+        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs, usePOfData=usePOfData)
+        self.trainY = keras.utils.to_categorical(self.trainY)
         if validX is not None:
-            self.validY = keras.utils.to_categorical(validY)
+            self.validY = keras.utils.to_categorical(self.validY)
         if testX is not None:
-            self.testY = keras.utils.to_categorical(testY)
+            self.testY = keras.utils.to_categorical(self.testY)
         if memory_frac != 1:
             keras.backend.clear_session()
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_frac)
@@ -416,7 +420,7 @@ class NeuralNetworkClassifierMethods(Classifier):
                           epochs=epochs)
         rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter, cv=4,
                                   random_state=seed,
-                                  verbose=verbose, refit = False)
+                                  verbose=verbose, refit=False)
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
