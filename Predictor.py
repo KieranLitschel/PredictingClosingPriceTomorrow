@@ -416,7 +416,29 @@ class NeuralNetworkClassifierMethods(Classifier):
                           epochs=epochs)
         rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter, cv=4,
                                   random_state=seed,
-                                  verbose=verbose)
+                                  verbose=verbose, refit = False)
+        rscv.fit(self.trainX, self.trainY)
+        return rscv
+
+    def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
+                               sndActivation):
+        layers = [self.CustomLayer(fstL2, fstLmbda, fstNeurons, fstActivation),
+                  self.CustomLayer(sndL2, sndLmbda, sndNeurons, sndActivation)]
+        return self.create_model(layers)
+
+    def random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
+        model = keras.wrappers.scikit_learn.KerasClassifier(self.create_two_layer_model, verbose=0)
+        batch_sizes = [128, 256, 512, 768, 1024]
+        epochs = [10, 50, 100, 200, 300, 400, 500]
+        L2s = [True, False]
+        lmbdas = [0.5, 0.1, 0.05, 0.01, 0.005, 0.001]
+        neurons = range(2, 2 * self.trainX.shape[1])
+        activations = [tf.nn.softmax, tf.nn.sigmoid, tf.nn.tanh, tf.nn.relu]
+        param_dist = dict(fstL2=L2s, fstLmbda=lmbdas, fstNeurons=neurons, fstActivation=activations, sndL2=L2s,
+                          sndLmbda=lmbdas, sndNeurons=neurons, sndActivation=activations, batch_size=batch_sizes,
+                          epochs=epochs)
+        rscv = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter, cv=4,
+                                  random_state=seed, verbose=verbose, refit=False)
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
