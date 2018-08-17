@@ -23,6 +23,7 @@
     * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#introduction-1)
     * [**Cleaning up the data**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#cleaning-up-the-data)
     * [**Retuning hyperparameters**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#retuning-hyperparameters)
+  * [**Predicting using neural networks**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-neural-networks)
     
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
