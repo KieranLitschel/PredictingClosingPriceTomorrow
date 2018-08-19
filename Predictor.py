@@ -405,7 +405,7 @@ class NeuralNetworkClassifierMethods(Classifier):
             sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
             keras.backend.set_session(sess)
 
-    def create_model(self, layers):
+    def create_model(self, layers, dropout_rate=0.5):
         model = keras.Sequential()
         first = True
         i = 0
@@ -421,16 +421,17 @@ class NeuralNetworkClassifierMethods(Classifier):
             else:
                 model.add(keras.layers.Dense(layer.neurons, activation=layer.activation, kernel_regularizer=reg,
                                              name="Layer-" + str(i)))
-            model.add(keras.layers.Dropout(0.5, name="dropout-" + str(i)))
+            if dropout_rate != 0:
+                model.add(keras.layers.Dropout(dropout_rate, name="dropout-" + str(i)))
             i += 1
         model.add(keras.layers.Dense(4, activation=tf.nn.softmax, name="output"))
         model.compile(optimizer='adam', loss='categorical_crossentropy',
                       metrics=['accuracy'])
         return model
 
-    def create_single_layer_model(self, L2, lmbda, neurons, activation):
+    def create_single_layer_model(self, L2, lmbda, neurons, activation, dropout_rate=0.5):
         layers = [self.CustomLayer(L2, lmbda, neurons, activation)]
-        return self.create_model(layers)
+        return self.create_model(layers, dropout_rate)
 
     def random_search_single_layer(self, seed=0, verbose=2, n_iter=5):
         np.random.seed(seed)
@@ -450,12 +451,13 @@ class NeuralNetworkClassifierMethods(Classifier):
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
-    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, verbose=2, seed=0):
+    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates, verbose=2,
+                                 seed=0):
         np.random.seed(seed)
         tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
-                          epochs=epochs)
+                          epochs=epochs, dropout_rate=dropout_rates)
         gscv = GridSearchCV(estimator=model, param_grid=param_grid, cv=4, verbose=verbose, refit=False)
         gscv.fit(self.trainX, self.trainY)
         return gscv
