@@ -50,7 +50,10 @@ def graphChangeInAccs(values, gscv, xlbl):
 
 
 def RandomSearchCVToCSV(RSCV):
-    lines = ""
+    line = ""
+    for parameter in RSCV.grid_scores_[0].parameters.keys():
+        line += str(parameter) + ","
+    lines = line + "\n"
     for iteration in RSCV.grid_scores_:
         line = ""
         for parameter in iteration.parameters.keys():
