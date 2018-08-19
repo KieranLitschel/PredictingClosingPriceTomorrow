@@ -29,7 +29,9 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
     plt.show()
 
 
-def graphChangeInAccs(values, accuracies, stds, xlbl):
+def graphChangeInAccs(values, gscv, xlbl):
+    accuracies = [score.mean_validation_score * 100 for score in gscv.grid_scores_]
+    stds = [np.std(score.cv_validation_scores) * 100 for score in gscv.grid_scores_]
     fig, ax1 = plt.subplots()
     ax1.plot(values, accuracies, 'r')
     ax1.set_xlabel(xlbl)
@@ -470,7 +472,7 @@ class NeuralNetworkClassifierMethods(Classifier):
         L2s = [True, False]
         lmbdas = [0.5, 0.1, 0.05, 0.01, 0.005, 0.001]
         neurons = range(2, 2 * self.trainX.shape[1])
-        activations = [tf.nn.softmax, tf.nn.sigmoid, tf.nn.tanh, tf.nn.relu]
+        activations = [tf.nn.leaky_relu, tf.nn.tanh, tf.nn.relu]
         param_dist = dict(fstL2=L2s, fstLmbda=lmbdas, fstNeurons=neurons, fstActivation=activations, sndL2=L2s,
                           sndLmbda=lmbdas, sndNeurons=neurons, sndActivation=activations, batch_size=batch_sizes,
                           epochs=epochs)
