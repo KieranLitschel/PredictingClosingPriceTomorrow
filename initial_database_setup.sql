@@ -124,6 +124,7 @@ CREATE TABLE timeseriesdaily
   `2_80_20`         INT        NULL,
   `4_60_20_20`      INT        NULL,
   `4_60_20_20_wrds` INT        NULL,
+  `2_60_20_20_wrds` INT        NULL,
   PRIMARY KEY (ticker, date),
   CONSTRAINT timeseriesdaily_tickers_ticker_fk
   FOREIGN KEY (ticker) REFERENCES tickers (ticker)
