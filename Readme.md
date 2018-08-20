@@ -329,4 +329,52 @@ The top 10 results of 26 are displayed below, and somewhat unsurprisingly we onl
 
 I've decided to train the neural network in TensorFlow as it is a modern library that will integrate well with training using Google Compute. I've experimented with low-level TensorFlow and Keras, and decided that Keras is most appropriate for this project as it will allow me to adjust the model quickly. 
 
-To start with I used the Adam optimizer, as this seemed like the simplest optimizer to tune. I also started with a single layer neural network, as this is simplest to optimize. I started by running 60 iterations of RandomizedSearchCV experimenting with modifying the number of neurons and epochs, the activation function, the batch size, whether to use L1 or L2 regularization, and what value of lambda to use for regularization.
+To start with I used the Adam optimizer, as this seemed like the simplest optimizer to tune. I also started with a neural network with one hidden layer, as this is simplest to optimize.
+
+### Results of random search for network with one hidden layer
+
+I started by running 60 iterations of RandomizedSearchCV experimenting with modifying the number of neurons and epochs, the activation function, the batch size, whether to use L1 or L2 regularization, and what value of lambda to use for regularization. Below are the top 10 results.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Top%2010%20results%20from%20random%20search%20of%20single%20hidden%20layer.PNG" alt="Top 10 results from random search for a neural network with a single hidden layer" style="width: 10px;"/>
+
+Noticably the top 10 is dominated by networks using rectified linear units as the hidden layer. As a result I decided to retune the best result to see if I could improve the accuracy further.
+
+### Tuning network with one hidden layer
+
+It is infeasible to tune hyperparameters using the whole network, so I used a sample. First I tried using a sample of 1% of the data. The experiments I conducted are sumarised in the results folder for neural networks in the repo in Hyperparameters.docx, and the results are displayed in graphs of experiments 1 - 3. I have decided not to include any detail here though because the sample size proved too small, with there being a lot of noise in the accuracy meaning it was difficult to optimise, and when I tried my retuned hyperparameters on the whole training set I found accuracy decreased from those found by the random search, suggesting the sample did not generalize the dataset well and that I had overfitted the sample as a result.
+
+Consequently I decided to optimise using 10% of the data. But first I decided to tune the number of epochs using the whole dataset. The results are displayed below.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%204%20-%20Changing%20Number%20of%20Epochs.png" alt="Effect of changing the number of epochs" style="width: 10px;"/>
+
+This proved to be successful, with 200 epochs giving the best accuracy of 32.0992%, with a standard deviation of 0.1491%. This also significantly reduced training times, with it reducing time to train the network from 200 minutes to 80 minutes, a significant improvement. This also made it much more feesible to tune hyperparameters using 10% of the data.
+
+To start with I trained the network with the new optimal found hyperparameters to give a baseline value. I found the accuracy to be 31.9259% with a standard deviation of 0.372%. This was very close to the accuracy found using the whole dataset suggesting the sample size was suitably large. Next I retuned the number of neurons.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%205%20-%20Changing%20Number%20of%20Neurons.png" alt="Effect of changing the number of neurons" style="width: 10px;"/>
+
+There is quite a lot of noise in the graph, but the increase in accuracy appears to plateu after around 40 neurons. But I decided to use 75 neurons as this gave the lowest standard deviation of 0.167%, and also gave a mean accuracy of 32.178%
+
+Next I attempted to retune regularization, trying both L1 and L2 regularization with a range of values of lambda, you can see the results in the results folder in images for experiments 6 and 7 respectively. I have only included the results for L2 (experiment 7) below, as they both show the same trend, with accuracy continuing to increase as lambda decreased.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%207%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
+
+I hypothesised this might have been because in combination regularization and dropout led to underfitting, so I tried setting lambda to 0, and sure enough the accuracy increased to 32.232% with a standard deviation of 0.291%.
+
+Consequently next I decided to retune the dropout rate, using a value of 0 for lambda so that regularization did not intefere with the experiment.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%208%20-%20Changing%20Dropout%20Rate.png" alt="Effect of changing the dropout rate" style="width: 10px;"/>
+
+I found that setting the dropout rate to 0.3 gave the best accuracy of 32.297% with a standard deviation of 0.326%.
+
+I decided it was worth also experimenting with L1 and L2 regularization without dropout to see which of the three performed the best. Consequently I set the dropout rate to 0, and tried a range of values for lambda. Note that each value of the y-axis was attained using a value of lambda of 10^(-x).
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%209%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization" style="width: 10px;"/>
+
+I found that 0.001 that using 0.001 as the value for lambda gave the best accuracy of 32.232% with a standard deviation of 0.291%.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2010%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
+
+I found that using 0.001 as the value for lambda gave the best stable accuracy of 32.128% with a standard deviation of 0.271%.
+
+Of the three dropout appears to perform the best, so I used that with a dropout rate of 0.3. But I decided it was worth seeing if any greater accuracy could be achieved using the new dropout rate and L1 regularization, so I investigated this.
