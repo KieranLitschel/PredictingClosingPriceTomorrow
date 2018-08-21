@@ -391,7 +391,7 @@ class RandomForestClassifierMethods(Classifier):
 
 class NeuralNetworkClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=6, memory_frac=0.4,
+    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=1, memory_frac=0.4,
                  usePOfData=100):
         Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs, usePOfData=usePOfData)
         self.trainY = keras.utils.to_categorical(self.trainY)
