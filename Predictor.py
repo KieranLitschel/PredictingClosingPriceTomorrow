@@ -12,6 +12,7 @@ import math
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
+import TensorflowSearch
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -391,19 +392,16 @@ class RandomForestClassifierMethods(Classifier):
 
 class NeuralNetworkClassifierMethods(Classifier):
 
-    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, n_jobs=1, memory_frac=0.4,
+    def __init__(self, trainX, trainY, testX=None, testY=None, validX=None, validY=None, threads=2, memory_frac=0.8,
                  usePOfData=100):
-        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=n_jobs, usePOfData=usePOfData)
+        Classifier.__init__(self, trainX, trainY, testX, testY, validX, validY, n_jobs=1, usePOfData=usePOfData)
         self.trainY = keras.utils.to_categorical(self.trainY)
         if validX is not None:
             self.validY = keras.utils.to_categorical(self.validY)
         if testX is not None:
             self.testY = keras.utils.to_categorical(self.testY)
-        if memory_frac != 1:
-            keras.backend.clear_session()
-            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_frac)
-            sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-            keras.backend.set_session(sess)
+        self.threads = threads
+        self.total_memory = memory_frac
 
     def create_model(self, layers, dropout_rate=0.5):
         model = keras.Sequential()
@@ -451,16 +449,27 @@ class NeuralNetworkClassifierMethods(Classifier):
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
-    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates, verbose=2,
-                                 seed=0):
+    def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
+                                 seed=0, path="MTTGCV.pickle", pythonPath="venv\Scripts\python.exe"):
         np.random.seed(seed)
         tf.set_random_seed(seed)
-        model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs, dropout_rate=dropout_rates)
-        gscv = GridSearchCV(estimator=model, param_grid=param_grid, cv=4, verbose=verbose, refit=False)
-        gscv.fit(self.trainX, self.trainY)
-        return gscv
+        MTTGCV = TensorflowSearch.MultiThreadTensorGPUCrossValidation(path, pythonPath, False)
+        MTTGCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
+                          search_type="grid", param_grid=param_grid, cv=4, threads=self.threads, total_memory=self.total_memory,
+                          seed=seed)
+        MTTGCV.start()
+        return MTTGCV.getResults()
+
+    def continue_search(self, path="MTTGCV.pickle", pythonPath="venv\Scripts\python.exe"):
+        MTTGCV = TensorflowSearch.MultiThreadTensorGPUCrossValidation(path, pythonPath, True)
+        if MTTGCV.file_found:
+            MTTGCV.change_threads_memory(self.threads, self.total_memory)
+            MTTGCV.start()
+            return MTTGCV.getResults()
+        else:
+            return None
 
     def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
                                sndActivation):
