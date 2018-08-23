@@ -12,7 +12,7 @@ import math
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
-import TensorflowSearch
+import KerasSearchCV
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -450,24 +450,43 @@ class NeuralNetworkClassifierMethods(Classifier):
         return rscv
 
     def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
-                                 seed=0, path="MTTGCV.pickle", pythonPath="venv\Scripts\python.exe"):
-        np.random.seed(seed)
-        tf.set_random_seed(seed)
+                                 seed=0, path="KSCV.pickle"):
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs, dropout_rate=dropout_rates)
-        MTTGCV = TensorflowSearch.MultiThreadTensorGPUCrossValidation(path, pythonPath, False)
-        MTTGCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
-                          search_type="grid", param_grid=param_grid, cv=4, threads=self.threads, total_memory=self.total_memory,
+        KSCV = KerasSearchCV.Host(path, False)
+        KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
+                          search_type="grid", param_grid=param_grid, cv=4, threads=self.threads,
+                          total_memory=self.total_memory,
                           seed=seed)
-        MTTGCV.start()
-        return MTTGCV.getResults()
+        KSCV.start()
+        return KSCV.getResults()
 
-    def continue_search(self, path="MTTGCV.pickle", pythonPath="venv\Scripts\python.exe"):
-        MTTGCV = TensorflowSearch.MultiThreadTensorGPUCrossValidation(path, pythonPath, True)
-        if MTTGCV.file_found:
-            MTTGCV.change_threads_memory(self.threads, self.total_memory)
-            MTTGCV.start()
-            return MTTGCV.getResults()
+    def sklearn_grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
+                                         verbose=2, seed=0):
+        try:
+            memory_frac = self.total_memory
+            keras.backend.clear_session()
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=memory_frac)
+            sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+            keras.backend.set_session(sess)
+
+            np.random.seed(seed)
+            tf.set_random_seed(seed)
+            model = keras.wrappers.scikit_learn.KerasClassifier(self.create_single_layer_model, verbose=0)
+            param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
+                              epochs=epochs, dropout_rate=dropout_rates)
+            gscv = GridSearchCV(estimator=model, param_grid=param_grid, cv=4, verbose=verbose, refit=False)
+            gscv.fit(self.trainX, self.trainY)
+            return gscv
+        finally:
+            keras.backend.clear_session()
+
+    def continue_search(self, path="KSCV.pickle", pythonPath="venv\Scripts\python.exe"):
+        KSCV = KerasSearchCV.Host(path, pythonPath, True)
+        if KSCV.file_found:
+            KSCV.change_threads_memory(self.threads, self.total_memory)
+            KSCV.start()
+            return KSCV.getResults()
         else:
             return None
 
