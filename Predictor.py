@@ -403,7 +403,7 @@ class NeuralNetworkClassifierMethods(Classifier):
         self.threads = threads
         self.total_memory = memory_frac
 
-    def create_model(self, layers, dropout_rate=0.5):
+    def create_model(self, layers, dropout_rate=0.5, learning_rate=0.001):
         model = keras.Sequential()
         first = True
         i = 0
@@ -423,13 +423,13 @@ class NeuralNetworkClassifierMethods(Classifier):
                 model.add(keras.layers.Dropout(dropout_rate, name="dropout-" + str(i)))
             i += 1
         model.add(keras.layers.Dense(4, activation=tf.nn.softmax, name="output"))
-        model.compile(optimizer='adam', loss='categorical_crossentropy',
-                      metrics=['accuracy'])
+        optimizer = keras.optimizers.Adam(lr=learning_rate)
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
         return model
 
-    def create_single_layer_model(self, L2, lmbda, neurons, activation, dropout_rate=0.5):
+    def create_single_layer_model(self, L2, lmbda, neurons, activation, dropout_rate=0.5, learning_rate=0.001):
         layers = [self.CustomLayer(L2, lmbda, neurons, activation)]
-        return self.create_model(layers, dropout_rate)
+        return self.create_model(layers, dropout_rate, learning_rate)
 
     def random_search_single_layer(self, seed=0, verbose=2, n_iter=5):
         np.random.seed(seed)
@@ -450,14 +450,14 @@ class NeuralNetworkClassifierMethods(Classifier):
         return rscv
 
     def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
-                                 seed=0, path="KSCV.pickle"):
+                                 learning_rates,                                 seed=0, path="KSCV.pickle"):
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
-                          epochs=epochs, dropout_rate=dropout_rates)
+                          epochs=epochs, dropout_rate=dropout_rates, learning_rate=learning_rates)
         KSCV = KerasSearchCV.Host(path, False)
         KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
-                          search_type="grid", param_grid=param_grid, cv=4, threads=self.threads,
-                          total_memory=self.total_memory,
-                          seed=seed)
+                        search_type="grid", param_grid=param_grid, cv=4, threads=self.threads,
+                        total_memory=self.total_memory,
+                        seed=seed)
         KSCV.start()
         return KSCV.getResults()
 
@@ -481,8 +481,8 @@ class NeuralNetworkClassifierMethods(Classifier):
         finally:
             keras.backend.clear_session()
 
-    def continue_search(self, path="KSCV.pickle", pythonPath="venv\Scripts\python.exe"):
-        KSCV = KerasSearchCV.Host(path, pythonPath, True)
+    def continue_search(self, path="KSCV.pickle"):
+        KSCV = KerasSearchCV.Host(path, True)
         if KSCV.file_found:
             KSCV.change_threads_memory(self.threads, self.total_memory)
             KSCV.start()
