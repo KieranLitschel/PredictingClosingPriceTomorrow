@@ -30,9 +30,9 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
     plt.show()
 
 
-def graphChangeInAccs(values, gscv, xlbl):
-    accuracies = [score.mean_validation_score * 100 for score in gscv.grid_scores_]
-    stds = [np.std(score.cv_validation_scores) * 100 for score in gscv.grid_scores_]
+def graphChangeInAccs(values, results, xlbl):
+    accuracies = [results[key]['mean'] for key in results.keys()]
+    stds = [results[key]['std'] for key in results.keys()]
     fig, ax1 = plt.subplots()
     ax1.plot(values, accuracies, 'r')
     ax1.set_xlabel(xlbl)
@@ -450,14 +450,13 @@ class NeuralNetworkClassifierMethods(Classifier):
         return rscv
 
     def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
-                                 learning_rates,                                 seed=0, path="KSCV.pickle"):
+                                 learning_rates, seed=0, cv=4, path="KSCV.pickle"):
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs, dropout_rate=dropout_rates, learning_rate=learning_rates)
         KSCV = KerasSearchCV.Host(path, False)
         KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
-                        search_type="grid", param_grid=param_grid, cv=4, threads=self.threads,
-                        total_memory=self.total_memory,
-                        seed=seed)
+                        search_type="grid", param_grid=param_grid, cv=cv, threads=self.threads,
+                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY)
         KSCV.start()
         return KSCV.getResults()
 
