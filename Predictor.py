@@ -30,24 +30,32 @@ def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
     plt.show()
 
 
-def graphChangeInAccs(values, results, xlbl):
-    accuracies = [results[key]['mean'] for key in results.keys()]
-    stds = [results[key]['std'] for key in results.keys()]
-    fig, ax1 = plt.subplots()
-    ax1.plot(values, accuracies, 'r')
-    ax1.set_xlabel(xlbl)
-    ax1.set_ylabel('Average accuracy using 4-fold CV (%)', color='r')
-    ax1.tick_params('y', colors='r')
+def graphChangeInAccs(values, results, xlbl, cv=True):
+    if cv:
+        accuracies = [results[key]['mean'] for key in results.keys()]
+        stds = [results[key]['std'] for key in results.keys()]
+        fig, ax1 = plt.subplots()
+        ax1.plot(values, accuracies, 'r')
+        ax1.set_xlabel(xlbl)
+        ax1.set_ylabel('Average accuracy using 4-fold CV (%)', color='r')
+        ax1.tick_params('y', colors='r')
 
-    ax2 = ax1.twinx()
-    ax2.plot(values, stds, 'b')
-    ax2.set_ylabel('Standard deviation of accuracy using 4-fold CV (%)', color='b')
-    ax2.tick_params('y', colors='b')
+        ax2 = ax1.twinx()
+        ax2.plot(values, stds, 'b')
+        ax2.set_ylabel('Standard deviation of accuracy using 4-fold CV (%)', color='b')
+        ax2.tick_params('y', colors='b')
 
-    fig.tight_layout()
-    fig.set_size_inches(8, 6, forward=True)
-    plt.title("Effect of changing " + xlbl)
-    plt.show()
+        fig.tight_layout()
+        fig.set_size_inches(8, 6, forward=True)
+        plt.title("Effect of changing " + xlbl)
+        plt.show()
+    else:
+        accuracies = [results[key]['acc'] for key in results.keys()]
+        plt.title("Effect of changing " + xlbl)
+        plt.xlabel(xlbl)
+        plt.ylabel("Accuracy classifying validation set (%)")
+        plt.plot(values, accuracies)
+        plt.show()
 
 
 def RandomSearchCVToCSV(RSCV):
@@ -450,13 +458,14 @@ class NeuralNetworkClassifierMethods(Classifier):
         return rscv
 
     def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
-                                 learning_rates, seed=0, cv=4, path="KSCV.pickle"):
+                                 learning_rates, seed=0, cv=4, path="KSCV.pickle", tensorboard_on=False):
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs, dropout_rate=dropout_rates, learning_rate=learning_rates)
         KSCV = KerasSearchCV.Host(path, False)
         KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
                         search_type="grid", param_grid=param_grid, cv=cv, threads=self.threads,
-                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY)
+                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
+                        tensorboard_on=tensorboard_on)
         KSCV.start()
         return KSCV.getResults()
 
