@@ -5,10 +5,16 @@ import pandas as pd
 
 class WRDS:
     def __init__(self, wrds_username):
+        self.wrds_username = wrds_username
+        self.db = None
+
+    def connectToWRDS(self):
         print("Forming connection to wrds...")
-        self.db = wrds.Connection(wrds_username=wrds_username)
+        self.db = wrds.Connection(wrds_username=self.wrds_username)
 
     def getPermnos(self, tickers):
+        if self.db is None:
+            self.connectToWRDS()
         query = "SELECT DISTINCT ticker, permno FROM crsp.dse WHERE"
         if type(tickers) is list:
             first = True
@@ -27,6 +33,8 @@ class WRDS:
         return permnos
 
     def getFundamentals(self, permnos, columns):
+        if self.db is None:
+            self.connectToWRDS()
         query = "SELECT permno,public_date"
         if type(columns) is list:
             for column in columns:
