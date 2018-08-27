@@ -13,6 +13,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 import KerasSearchCV
+import sys
+import os
 
 
 def graphTwoForComparison(ks, fWith, fWithout, addedFeature):
@@ -458,10 +460,11 @@ class NeuralNetworkClassifierMethods(Classifier):
         return rscv
 
     def grid_search_single_layer(self, batch_sizes, epochs, L2s, lmbdas, neurons, activations, dropout_rates,
-                                 learning_rates, seed=0, cv=4, path="KSCV.pickle", tensorboard_on=False):
+                                 learning_rates, seed=0, cv=4, path=os.path.dirname(os.path.abspath(__file__)),
+                                 pickle_path="KSCV.pickle", tensorboard_on=False):
         param_grid = dict(L2=L2s, lmbda=lmbdas, neurons=neurons, activation=activations, batch_size=batch_sizes,
                           epochs=epochs, dropout_rate=dropout_rates, learning_rate=learning_rates)
-        KSCV = KerasSearchCV.Host(path, False)
+        KSCV = KerasSearchCV.Host(path, pickle_path, False)
         KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_single_layer_model,
                         search_type="grid", param_grid=param_grid, cv=cv, threads=self.threads,
                         total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
@@ -489,8 +492,8 @@ class NeuralNetworkClassifierMethods(Classifier):
         finally:
             keras.backend.clear_session()
 
-    def continue_search(self, path="KSCV.pickle"):
-        KSCV = KerasSearchCV.Host(path, True)
+    def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
+        KSCV = KerasSearchCV.Host(path, pickle_path, True)
         if KSCV.file_found:
             KSCV.change_threads_memory(self.threads, self.total_memory)
             KSCV.start()
