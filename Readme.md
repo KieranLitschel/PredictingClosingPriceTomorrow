@@ -379,4 +379,37 @@ I found that 0.001 that using 0.001 as the value for lambda gave the best accura
 
 I found that using 0.001 as the value for lambda gave the best stable accuracy of 32.128% with a standard deviation of 0.271%.
 
-Of the three dropout appears to perform the best, so I used that with a dropout rate of 0.3. But I decided it was worth seeing if any greater accuracy could be achieved using the new dropout rate and L1 regularization, so I investigated this.
+Of the three dropout appears to perform the best, so I used that with a dropout rate of 0.3. But I decided it was worth seeing if any greater accuracy could be achieved using the new dropout rate and L1 regularization, so I investigated this. Note that in the graph below, the value of lambda for each value of x corresponds to 10^(-x).
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization and dropout" style="width: 10px;"/>
+
+From the above I found that a value of 10^-9 gave the best accuracy, giving a mean accuracy of 32.361% with a standard deviation of 0.229%.
+
+Next I retuned the number of neruons again, in case the change in dropout and regularization choice meant the optimal value changes.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Changing the number of neurons" style="width: 10px;"/>
+
+From the above I discovered the new optimal was 60 neurons, giving a mean accuracy of 32.327% and a standard deviation of 0.211%. It is worth noting this accuracy is lower than that found in the last experiment, but this is probably down to the random numbers used being slightly different.
+
+Next I tried to retune the batch size and number of epochs using the whole training set.
+
+The first experiment used a batch size of 756.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2013%20-%20Number%20of%20epochs%20(756%20batch%20size).png" alt="Changing the number of epochs with a batch size of 756" style="width: 10px;"/>
+
+The second experiment used a batch size of 512.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2014%20-%20Number%20of%20epochs%20(512%20batch%20size).png" alt="Changing the number of epochs with a batch size of 512" style="width: 10px;"/>
+
+And the third a batch size of 256.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2015%20-%20Number%20of%20epochs%20(256%20batch%20size).png" alt="Changing the number of epochs with a batch size of 256" style="width: 10px;"/>
+
+I found that changing the batch size had very little impact on accuracy, but increased training time significantly. Consequently I went with a batch size of 756, as it was the fastest too train, and also yielded the highest accuracy of 32.715% with a standard deviation of 0.225% in 200 epochs.
+
+In experiments 16 to 26 I retuned the learning rate and number of epochs. I have omitted most of the results here as several experiments proved unsuccessfuly, for example trying to tune using cross-validation and only on a sample of the training set proved unsuccessfuly, and in the end I used the whole training set for tuning, using the validation set to validate the training set wasn't being overfitted. In the end a learning rate of 10^-4 proved optimal training over 4390 epochs, which gave an accuracy on the validation set of around 32.87%. The full results for the whole range of epochs are displayed below.
+
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2024%20-%20Changing%20the%20number%20of%20epochs.PNG" alt="Changing the number of epochs with a learning rate of 10^-4" style="width: 10px;"/>
+
+Note that the graph above is slightly different from the usual, as I made use of TensorBoard for training which reports the validation accuracy after every epoch. The bold line is the smoothed accuracy for each epoch (with a smoothing factor of 0.9), and the faint line is the true values of accuracy.
+
