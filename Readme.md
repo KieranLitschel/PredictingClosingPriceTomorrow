@@ -84,6 +84,7 @@ The 4 class problem is described at the beginning of KNN, but in brief we are tr
 
 | Method                               | Details | Accuracy on test set |
 |:------------------------------------:|:-------:|:--------------------:|
+| Random forest                        | 650 estimators, 100 min samples per leaf, 9 max features per split | 33.311% |
 | Neural network with one hidden layer | layers: \[input: 38 neurons -> hidden layer: 60 neurons, relu -> dropout layer: 0.3 dropout rate -> output layer: 4 neurons, softmax\], batch size of 756, learning rate of 10^-4, 4390 epochs, L1 regularization with a value of 10^-9 for lambda | 32.835% |
 
 ## Predicting using KNN
