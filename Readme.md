@@ -1,6 +1,9 @@
 # Table of Contents
 * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
 * [**Progress Log**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
+  * [**Summary of key results**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#summary-of-key-results)
+    * [**The final feature set**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#the-final-feature-set)
+    * [**Results for the 4-class problem**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-for-the-4-class-problem)
   * [**Predicting using KNN**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-knn)
     * [**Results of adding SMAs**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-using-features-adjclosepchange-pdiffclose5sma-pdiffclose8sma-pdiffclose13sma)
     * [**Results of adding RSI**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-feature-rsi)
@@ -30,6 +33,60 @@
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
+## Summary of key results
+
+The rest of the progress log is written in chronologigal order, but this section will be updated as I create new models.
+
+### The final feature set
+
+The finalized feature set consists of the following technical indicators and financial ratios, see later sections for details on non-standard ones.
+
+The following table lists all features related to technical indicators. These are all calculated from historical stock quotes for each trading day which are fetched via the [Alpha Vantage API](https://www.alphavantage.co/).
+
+| Variable name(s)                                | Explanation                                                                    |
+|:-----------------------------------------------:|:------------------------------------------------------------------------------:|
+| adjClosePChange                                 | Percentage change in closing price since the previous trading day              |
+| pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA | Percentage difference between the closing price and the 5, 8, and 13 day SMA's |
+| rsi                                             | Relative strength index                                                        |
+| pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB | All features relate to bollinger bands, see the section on adding them for details |
+| macdHist, deltaMacdHist                         | All features relate to moving average convergance and divergance, see the section on adding them for details |
+| stochPK, stochPD                                | All features relate to the stochastic oscillator, see the section on adding them for details |
+| adx                                             | Average directional index                                                      |
+| pDiffPdiNdi                                     | The percentage difference of the postivie directional indicator from the negative directional indicator used in ADX |
+| obvGrad5, obvGrad8, obvGrad13                   | The gradient of 5, 8, and 13 day SMA's for on-balance volume                   |
+| adjCloseGrad5, adjCloseGrad8, adjCloseGrad13, adjCloseGrad20, adjCloseGrad35, adjCloseGrad50 | The gradient of the 5, 8, 13, 20, 35, and 50 day SMA's for adjusted closing price |
+
+The following table lists all features related to financial ratios. These are fetched from the Wharton Research Data Services database on financial ratios. The techincal indicators for each trading day are joined with the most recent quote for ratios, but quotes for ratios are only given once per month, so ratios for each trading day can be up to a month out of date, but nonetheless they provide more insight than technical indicators alone.
+
+| Variable name(s)| Explanation             |
+|:---------------:|:-----------------------:|
+| de_ratio        | Debt to equity ratio    |
+| curr_ratio      | Current ratio           |
+| quick_ratio     | Quick ratio             |
+| roe             | Return on equity        |
+| npm             | Net profit margin       |              
+| pe_exi          | P/E (Diluted, Excl EI)  |
+| pe_inc          | P/E (Diluted, Incl EI)  |
+| ps              | Price to sales          |
+| ptb             | Price to book           |
+| roa             | Return on assets        |
+| intcov_ratio    | Interest coverage ratio |
+| at_turn         | Asset turnover ratio    |
+
+### Results for the 4-class problem
+
+The 4 class problem is described at the beginning of KNN, but in brief we are trying to predict the closing price of the following trading day into one of the following 4 bands:
+
+* adjClosePChange <-1%
+* -1% <= adjClosePChange < 0%
+* 0% <= adjClosePChange < 1%
+* 1% <= adjClosePChange
+
+| Method                               | Details | Accuracy on test set |
+|:------------------------------------:|:-------:|:--------------------:|
+| Random forest                        | 650 estimators, 100 min samples per leaf, 9 max features per split | 33.311% |
+| Neural network with one hidden layer | layers: \[input: 38 neurons -> hidden layer: 60 neurons, relu -> dropout layer: 0.3 dropout rate -> output layer: 4 neurons, softmax\], batch size of 756, learning rate of 10^-4, 4390 epochs, L1 regularization with a value of 10^-9 for lambda | 32.835% |
+
 ## Predicting using KNN
 I have decided to try KNN as it is very simple to train, this will also give me a target to beat when training my neural network. I will classify the the percentage change in closing price tomorrow as one of four of the following classes:
 
@@ -413,3 +470,4 @@ In experiments 16 to 26 I retuned the learning rate and number of epochs. I have
 
 Note that the graph above is slightly different from the usual, as I made use of TensorBoard for training which reports the validation accuracy after every epoch. The bold line is the smoothed accuracy for each epoch (with a smoothing factor of 0.9), and the faint line is the true values of accuracy.
 
+Next I evaluated the model on the test set, a set of data which I had not used at all in training and tuning the network, this gave an accuracy of 32.84%, suggesting the hyperparameters were well chosen.
