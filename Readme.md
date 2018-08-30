@@ -413,3 +413,4 @@ In experiments 16 to 26 I retuned the learning rate and number of epochs. I have
 
 Note that the graph above is slightly different from the usual, as I made use of TensorBoard for training which reports the validation accuracy after every epoch. The bold line is the smoothed accuracy for each epoch (with a smoothing factor of 0.9), and the faint line is the true values of accuracy.
 
+Next I evaluated the model on the test set, a set of data which I had not used at all in training and tuning the network, this gave an accuracy of 32.84%, suggesting the hyperparameters were well chosen.
