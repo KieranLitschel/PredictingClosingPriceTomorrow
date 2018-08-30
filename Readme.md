@@ -1,6 +1,8 @@
 # Table of Contents
 * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
 * [**Progress Log**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
+  * [**Summary of key results**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#summary-of-key-results)
+    * [**Results for the 4-class problem**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-for-the-4-class-problem)
   * [**Predicting using KNN**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-knn)
     * [**Results of adding SMAs**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-using-features-adjclosepchange-pdiffclose5sma-pdiffclose8sma-pdiffclose13sma)
     * [**Results of adding RSI**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#results-of-adding-feature-rsi)
