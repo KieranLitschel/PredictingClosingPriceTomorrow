@@ -1,0 +1,1 @@
+L2_False_activation_relu_batch_size_756_dropout_rate_0_POINT_3_lmbda_1e_NEGATIVE_09_neurons_60_
