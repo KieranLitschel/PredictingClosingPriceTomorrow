@@ -36,6 +36,42 @@ This is the beginning of a project where I will be using the 20 year history of 
 
 The rest of the progress log is written in chronologigal order, but this section will be updated as I create new models.
 
+### The final feature set
+
+The finalized feature set consists of the following technical indicators and financial ratios, see later sections for details on non-standard ones.
+
+The following table lists all features related to technical indicators. These are all calculated from historical stock quotes for each trading day which are fetched via the [Alpha Vantage API](https://www.alphavantage.co/).
+
+| Variable name(s)                                | Explanation                                                                    |
+|:-----------------------------------------------:|:------------------------------------------------------------------------------:|
+| adjClosePChange                                 | Percentage change in closing price since the previous trading day              |
+| pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA | Percentage difference between the closing price and the 5, 8, and 13 day SMA's |
+| rsi                                             | Relative strength index                                                        |
+| pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB | All features relate to bollinger bands, see the section on adding them for details |
+| macdHist, deltaMacdHist                         | All features relate to moving average convergance and divergance, see the section on adding them for details |
+| stochPK, stochPD                                | All features relate to the stochastic oscillator, see the section on adding them for details |
+| adx                                             | Average directional index                                                      |
+| pDiffPdiNdi                                     | The percentage difference of the postivie directional indicator from the negative directional indicator used in ADX |
+| obvGrad5, obvGrad8, obvGrad13                   | The gradient of 5, 8, and 13 day SMA's for on-balance volume                   |
+| adjCloseGrad5, adjCloseGrad8, adjCloseGrad13, adjCloseGrad20, adjCloseGrad35, adjCloseGrad50 | The gradient of the 5, 8, 13, 20, 35, and 50 day SMA's for adjusted closing price |
+
+The following table lists all features related to financial ratios. These are fetched from the Wharton Research Data Services database on financial ratios. The techincal indicators for each trading day are joined with the most recent quote for ratios, but quotes for ratios are only given once per month, so ratios for each trading day can be up to a month out of date, but nonetheless they provide more insight than technical indicators alone.
+
+| Variable name(s)| Explanation             |
+|:---------------:|:-----------------------:|
+| de_ratio        | Debt to equity ratio    |
+| curr_ratio      | Current ratio           |
+| quick_ratio     | Quick ratio             |
+| roe             | Return on equity        |
+| npm             | Net profit margin       |              
+| pe_exi          | P/E (Diluted, Excl EI)  |
+| pe_inc          | P/E (Diluted, Incl EI)  |
+| ps              | Price to sales          |
+| ptb             | Price to book           |
+| roa             | Return on assets        |
+| intcov_ratio    | Interest coverage ratio |
+| at_turn         | Asset turnover ratio    |
+
 ### Results for the 4-class problem
 
 The 4 class problem is described at the beginning of KNN, but in brief we are trying to predict the closing price of the following trading day into one of the following 4 bands:
