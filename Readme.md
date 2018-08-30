@@ -30,6 +30,23 @@
 # Introduction
 This is the beginning of a project where I will be using the 20 year history of the current members of the S&P 500 to train a neural network to be able to classify the closing price tomorrow of any given stock into a fixed number of bounds.
 # Progress Log
+## Summary of key results
+
+The rest of the progress log is written in chronologigal order, but this section will be updated as I create new models.
+
+### Results for the 4-class problem
+
+The 4 class problem is described at the beginning of KNN, but in brief we are trying to predict the closing price of the following trading day into one of the following 4 bands:
+
+* adjClosePChange <-1%
+* -1% <= adjClosePChange < 0%
+* 0% <= adjClosePChange < 1%
+* 1% <= adjClosePChange
+
+| Method                               | Details | Accuracy on test set |
+|:------------------------------------:|:-------:|:--------------------:|
+| Neural network with one hidden layer | layers: \[input: 38 neurons -> hidden layer: 60 neurons, relu -> dropout layer: 0.3 dropout rate -> output layer: 4 neurons, softmax\], batch size of 756, learning rate of 10^-4, 4390 epochs, L1 regularization with a value of 10^-9 for lambda | 32.835% |
+
 ## Predicting using KNN
 I have decided to try KNN as it is very simple to train, this will also give me a target to beat when training my neural network. I will classify the the percentage change in closing price tomorrow as one of four of the following classes:
 
