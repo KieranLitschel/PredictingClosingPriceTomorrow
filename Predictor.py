@@ -13,7 +13,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 import KerasSearchCV
-import sys
 import os
 
 
@@ -492,22 +491,28 @@ class NeuralNetworkClassifierMethods(Classifier):
         finally:
             keras.backend.clear_session()
 
-    def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
-        KSCV = KerasSearchCV.Host(path, pickle_path, True)
-        if KSCV.file_found:
-            KSCV.change_threads_memory(self.threads, self.total_memory)
-            KSCV.start()
-            return KSCV.getResults()
-        else:
-            return None
+    def create_two_layer_model(self, fstNeurons, fstActivation, sndNeurons, sndActivation, L2, lmbda, dropout_rate=0.5,
+                               learning_rate=0.001):
+        layers = [self.CustomLayer(L2, lmbda, fstNeurons, fstActivation),
+                  self.CustomLayer(L2, lmbda, sndNeurons, sndActivation)]
+        return self.create_model(layers, dropout_rate, learning_rate)
 
-    def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
-                               sndActivation):
-        layers = [self.CustomLayer(fstL2, fstLmbda, fstNeurons, fstActivation),
-                  self.CustomLayer(sndL2, sndLmbda, sndNeurons, sndActivation)]
-        return self.create_model(layers)
+    def grid_search_two_layer(self, fstNeurons, fstActivations, sndNeurons, sndActivations, L2s, lmbdas, batch_sizes,
+                              epochs, dropout_rates, learning_rates, seed=0, cv=4,
+                              path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle",
+                              tensorboard_on=False):
+        param_grid = dict(fstNeurons=fstNeurons, fstActivation=fstActivations, sndNeurons=sndNeurons,
+                          sndActivation=sndActivations, L2=L2s, lmbda=lmbdas, batch_size=batch_sizes, epochs=epochs,
+                          dropout_rate=dropout_rates, learning_rate=learning_rates)
+        KSCV = KerasSearchCV.Host(path, pickle_path, False)
+        KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_two_layer_model,
+                        search_type="grid", param_grid=param_grid, cv=cv, threads=self.threads,
+                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
+                        tensorboard_on=tensorboard_on)
+        KSCV.start()
+        return KSCV.getResults()
 
-    def random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
+    def skelarn_random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
         np.random.seed(seed)
         tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_two_layer_model, verbose=0)
@@ -524,6 +529,15 @@ class NeuralNetworkClassifierMethods(Classifier):
                                   random_state=seed, verbose=verbose, refit=False)
         rscv.fit(self.trainX, self.trainY)
         return rscv
+
+    def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
+        KSCV = KerasSearchCV.Host(path, pickle_path, True)
+        if KSCV.file_found:
+            KSCV.change_threads_memory(self.threads, self.total_memory)
+            KSCV.start()
+            return KSCV.getResults()
+        else:
+            return None
 
     class CustomLayer:
         def __init__(self, L2, lmbda, neurons, activation):
