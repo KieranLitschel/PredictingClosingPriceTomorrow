@@ -500,7 +500,7 @@ class NeuralNetworkClassifierMethods(Classifier):
     def grid_search_two_layer(self, fstNeurons, fstActivations, sndNeurons, sndActivations, L2s, lmbdas, batch_sizes,
                               epochs, dropout_rates, learning_rates, seed=0, cv=4,
                               path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle",
-                              tensorboard_on=False):
+                              tensorboard_on=False, custom_object_scope=None):
         param_grid = dict(fstNeurons=fstNeurons, fstActivation=fstActivations, sndNeurons=sndNeurons,
                           sndActivation=sndActivations, L2=L2s, lmbda=lmbdas, batch_size=batch_sizes, epochs=epochs,
                           dropout_rate=dropout_rates, learning_rate=learning_rates)
@@ -508,7 +508,7 @@ class NeuralNetworkClassifierMethods(Classifier):
         KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_two_layer_model,
                         search_type="grid", param_grid=param_grid, cv=cv, threads=self.threads,
                         total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
-                        tensorboard_on=tensorboard_on)
+                        tensorboard_on=tensorboard_on, custom_object_scope=custom_object_scope)
         KSCV.start()
         return KSCV.getResults()
 
@@ -529,6 +529,21 @@ class NeuralNetworkClassifierMethods(Classifier):
                                   random_state=seed, verbose=verbose, refit=False)
         rscv.fit(self.trainX, self.trainY)
         return rscv
+
+    def random_search_two_layer(self, fstNeurons, fstActivations, sndNeurons, sndActivations, L2s, lmbdas, batch_sizes,
+                              epochs, dropout_rates, learning_rates, iterations=20, seed=0, cv=4,
+                              path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle",
+                              tensorboard_on=False, custom_object_scope=None):
+        param_grid = dict(fstNeurons=fstNeurons, fstActivation=fstActivations, sndNeurons=sndNeurons,
+                          sndActivation=sndActivations, L2=L2s, lmbda=lmbdas, batch_size=batch_sizes, epochs=epochs,
+                          dropout_rate=dropout_rates, learning_rate=learning_rates)
+        KSCV = KerasSearchCV.Host(path, pickle_path, False)
+        KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_two_layer_model,
+                        search_type="random", iterations=iterations, param_grid=param_grid, cv=cv, threads=self.threads,
+                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
+                        tensorboard_on=tensorboard_on, custom_object_scope=custom_object_scope)
+        KSCV.start()
+        return KSCV.getResults()
 
     def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
         KSCV = KerasSearchCV.Host(path, pickle_path, True)
