@@ -512,6 +512,17 @@ class NeuralNetworkClassifierMethods(Classifier):
         KSCV.start()
         return KSCV.getResults()
 
+    def custom_search_two_layer(self, params, seed=0, cv=4,
+                              path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle",
+                              tensorboard_on=False, custom_object_scope=None):
+        KSCV = KerasSearchCV.Host(path, pickle_path, False)
+        KSCV.create_new(trainX=self.trainX, trainY=self.trainY, model_constructor=self.create_two_layer_model,
+                        search_type="custom", param_grid=params, cv=cv, threads=self.threads,
+                        total_memory=self.total_memory, seed=seed, validX=self.validX, validY=self.validY,
+                        tensorboard_on=tensorboard_on, custom_object_scope=custom_object_scope)
+        KSCV.start()
+        return KSCV.getResults()
+
     def skelarn_random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
         np.random.seed(seed)
         tf.set_random_seed(seed)
