@@ -13,10 +13,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 import KerasSearchCV
-<<<<<<< HEAD
-=======
-import sys
->>>>>>> 600b5b6480a66e06321343639271ad084c2c7703
 import os
 
 
@@ -495,7 +491,6 @@ class NeuralNetworkClassifierMethods(Classifier):
         finally:
             keras.backend.clear_session()
 
-<<<<<<< HEAD
     def create_two_layer_model(self, fstNeurons, fstActivation, sndNeurons, sndActivation, L2, lmbda, dropout_rate=0.5,
                                learning_rate=0.001):
         layers = [self.CustomLayer(L2, lmbda, fstNeurons, fstActivation),
@@ -529,24 +524,6 @@ class NeuralNetworkClassifierMethods(Classifier):
         return KSCV.getResults()
 
     def skelarn_random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
-=======
-    def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
-        KSCV = KerasSearchCV.Host(path, pickle_path, True)
-        if KSCV.file_found:
-            KSCV.change_threads_memory(self.threads, self.total_memory)
-            KSCV.start()
-            return KSCV.getResults()
-        else:
-            return None
-
-    def create_two_layer_model(self, fstL2, fstLmbda, fstNeurons, fstActivation, sndL2, sndLmbda, sndNeurons,
-                               sndActivation):
-        layers = [self.CustomLayer(fstL2, fstLmbda, fstNeurons, fstActivation),
-                  self.CustomLayer(sndL2, sndLmbda, sndNeurons, sndActivation)]
-        return self.create_model(layers)
-
-    def random_search_two_layer(self, seed=0, verbose=2, n_iter=4):
->>>>>>> 600b5b6480a66e06321343639271ad084c2c7703
         np.random.seed(seed)
         tf.set_random_seed(seed)
         model = keras.wrappers.scikit_learn.KerasClassifier(self.create_two_layer_model, verbose=0)
@@ -564,7 +541,6 @@ class NeuralNetworkClassifierMethods(Classifier):
         rscv.fit(self.trainX, self.trainY)
         return rscv
 
-<<<<<<< HEAD
     def random_search_two_layer(self, fstNeurons, fstActivations, sndNeurons, sndActivations, L2s, lmbdas, batch_sizes,
                               epochs, dropout_rates, learning_rates, iterations=20, seed=0, cv=4,
                               path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle",
@@ -589,11 +565,10 @@ class NeuralNetworkClassifierMethods(Classifier):
         else:
             return None
 
-=======
->>>>>>> 600b5b6480a66e06321343639271ad084c2c7703
     class CustomLayer:
         def __init__(self, L2, lmbda, neurons, activation):
             self.L2 = L2
             self.lmbda = lmbda
             self.neurons = neurons
             self.activation = activation
+
