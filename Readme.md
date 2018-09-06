@@ -101,7 +101,7 @@ Note that:
 * adjClosePChange is the percentage change between the adjusted closing price the day before we are predicting and the day before that one.
 * pDiffCloseNSMA, where N is a number, is the percentage difference between the closing price the day before we are predicting, and the N day simple moving average, tracing back N days from the day before the day we are predicting. I chose to use 5, 8, and 13 as they are fibonaci numbers which are commonly compared against each other when assessing a stock.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%204%20features.png" alt="KNN with 4 features, plateus at approx 31% accuracy" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%204%20features.png" alt="KNN with 4 features, plateus at approx 31% accuracy" style="width: 10px;"/>
 
 Conclusions:
 * Begins to plateu at about 100 neighbours, trailing off at around 31% accuracy.
@@ -112,7 +112,7 @@ Note that:
 * RSI is the relative strength indicator ([see here](https://www.investopedia.com/terms/r/rsi.asp) for more information.
 * I used the features adjClosePChange, pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA, and RSI, although on the red line plotted below I show the results from the last experiment for comparison which I did not train using RSI.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%205%20features%20(rsi).png" alt="KNN with and without RSI" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%205%20features%20(rsi).png" alt="KNN with and without RSI" style="width: 10px;"/>
 
 Conclusions:
 * Adding RSI increased accuracy on the test set by 0.26%.
@@ -129,7 +129,7 @@ Note that:
       <dd>This is the difference between the SMA used and the upper bollinger band, to help identify when bollinger bands are squeezing.       </dd>
   </dl>
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%208%20features%20(bollinger%20bands).png" alt="KNN with and without RSI" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%208%20features%20(bollinger%20bands).png" alt="KNN with and without RSI" style="width: 10px;"/>
 
 Conclusions:
 * Adding the 3 features led to a 0.77% increase in accuracy.
@@ -137,23 +137,23 @@ Conclusions:
 ### Results of adding percentage difference between SMAs
 I hypothesised that there might be more that could be learnt from looking at the difference between the 5, 8, and 13 day SMAs with each other, so I added 3 features to capture this. Below are the results of adding these 3 features.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%2011%20features%20(difference%20between%20SMAs).png" alt="KNN with and without difference between SMAs" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%2011%20features%20(difference%20between%20SMAs).png" alt="KNN with and without difference between SMAs" style="width: 10px;"/>
 
 It is clear that adding these features does not help improve accuracy, probably because all they have to contribute is captured by the first 3 features I added related to SMAs, hence I will not use them as features in future, but may consider adding them again when applying PCA.
 ### Results of adding MACD
 The [MACD technical indicator](https://www.investopedia.com/terms/m/macd.asp) is used to identify when is best to enter and exit a trade, so I thought it might be able to give some information that will help determine what will happen to the stock tomorrow. The first feature I added was the MACD histogram, which is the difference between the MACD value (the difference between the fast and slow EMA) and the signal (the EMA of the MACD value). This value should help identify crossovers and dramatic rises.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%209%20features%20(MACD%20Histogram).png" alt="KNN with and without MACD Histogram" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%209%20features%20(MACD%20Histogram).png" alt="KNN with and without MACD Histogram" style="width: 10px;"/>
 
 The results of this experiment are very similair to the last one, but note how the two lines do not cross beyond 30 neighbours, and we also see a 0.13% increase in acuracy when k=100. For these reasons I think that the MACD is improving the accuracy of the classifier. However the increase in accuracy is rather disappointing, and I hypothesised that an issue may be that it is impossible for the model to tell which way the MACD histogram is moving and how fast, so I decided to add a feature to represent the difference between the MACD histogram at the current period and at the last period.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%2010%20features%20(MACD%20Histogram%20delta).png" alt="KNN with and without MACD Histogram delta" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%2010%20features%20(MACD%20Histogram%20delta).png" alt="KNN with and without MACD Histogram delta" style="width: 10px;"/>
 
 But from looking at the results from the experiment above, there is very little difference between the lines with and without the difference, suggesting there is nothing more to be learned from this feature. Hence I will leave the difference out of future models for the time being.
 ### Results of adding Stochastic Oscillator
 I chose to add the [stochastic oscilator](https://en.wikipedia.org/wiki/Stochastic_oscillator) as up to this point all features have been generated using the adjusted closing price, but the stochastic oscilator calculates momentum using the high, low, and close. The downside to this is that as the Alpha Vantage API does not supply an adjusted high and low price, so I have to use the raw high, low, and close prices. This means that stock splits and dividends will lead the oscilator to give false signals, but these are not frequent events so I hope that this indicator will still be able to give me a boost in accuracy.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/KNN%20with%2011%20features%20(stochastic%20oscillator).png" alt="KNN with and without stochastic oscillator" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/KNN%20with%2011%20features%20(stochastic%20oscillator).png" alt="KNN with and without stochastic oscillator" style="width: 10px;"/>
 
 We see an increase of accuracy of 0.19% as a result of adding this feature, and it is clear from the graph that it does increase accuracy.
 Increasing the number of features has made testing new features significantly slower, as a result in future experiments I will try neighbours in the range 60 to 110, as there appears to be a trend that from 60 onwards accuracy begins to plateu.
@@ -169,7 +169,7 @@ But I found that the best accuracy I could achieve was 51%, and bizarrely increa
 
 To test this hypothesis I reran KNN for all features I had selected up to and including the stochastic oscillator using the 2 class problem. The results of which you can see below.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/KNN/predicting%20rise%20or%20fall%20KNN%20with%2011%20features%20(up%20to%20stochastic%20oscillator).png" alt="KNN classifying rise or fall of stock" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/KNN/predicting%20rise%20or%20fall%20KNN%20with%2011%20features%20(up%20to%20stochastic%20oscillator).png" alt="KNN classifying rise or fall of stock" style="width: 10px;"/>
 
 In previous experiments I increased the number of neighbours each time by 5, but for this experiment I increased the number by 10 each time so the graph isn't as smooth. But it is clear that with more neighbours we could achieve a higher accuracy, with no clear indication that the increase in accuracy is slowing down as the number of neighbours increases. However, it is worth noting that the increase in accuracy each time is not significant, so it is not clear by what margin KNN outperforms logistic regression. So the conclusion from this experiment is that KNN does not give a definitive answer whether the data is linearly seperable or not. Though considering the performance of logistic regression I think it is safe to assume the data is not linearly seperable. Hence I will now experiment with random forests as they are able to cope with non-linearly seperable data.
 
@@ -177,7 +177,7 @@ In previous experiments I increased the number of neighbours each time by 5, but
 ### Experiment 1a - changing number of trees
 I will be using the implementation of random forests given in scikit learn as the version of TensorFlow I am using does not support random forests on windows. I first experimented with the number of trees, leaving all other parameters as default.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201a.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Experiment%201a.png" alt="Random forests tuning the number of trees" style="width: 10px;"/>
 
 The accuracy does not seem to plateu as quickly as we saw for KNN, with increase in accuracy being more gradual and not appearing to tail off. Despite this the time to generate the forests increases rapidly, with it taking 210 seconds for 70 trees, and 300 seconds for 100 trees. Consequently although 100 trees gives a better accuracy I have chosen 70 as the best value for the number of trees in this experiment, with no significant improvement in accuracy after this point.
 
@@ -185,7 +185,7 @@ The accuracy does not seem to plateu as quickly as we saw for KNN, with increase
 
 Next I adjusted max_features, which is the maximum number of features that are considered at each split, the default value was 4, but I tried all possible values (1 to 13). 
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201b.png" alt="Random forests tuning the maximum number of features" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Experiment%201b.png" alt="Random forests tuning the maximum number of features" style="width: 10px;"/>
 
 The results indicate the maximum number of features has little effect on accuracy, but it has a big effect on time, with it taking around 200 seconds to generate the tree and prediction for a maximum of 4 features which gives an accuracy of 31.9679%, and around 100 seconds to do the same with only 1 feature per tree which gives an accuracy of 31.8909%. Hence I will continue my experiments with 1 feature per tree for now.
 
@@ -193,7 +193,7 @@ The results indicate the maximum number of features has little effect on accurac
 
 Now that generating the tree is much faster, I thought it was worth experimenting to see if I could get a higher accuracy with more trees.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201c.png" alt="Random forests 1 feature per tree, tuning the number of trees" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Experiment%201c.png" alt="Random forests 1 feature per tree, tuning the number of trees" style="width: 10px;"/>
 
 I decided 100 trees was the best compromise between accuracy and time, with it giving an accuracy of 32.0716%, an increase of almost 0.2%, whilst increase time to generate and predict by only 40 seconds.
 
@@ -201,7 +201,7 @@ I decided 100 trees was the best compromise between accuracy and time, with it g
 
 minSamplesLeaf is the minimum number of samples to be at a leaf node. Increasing this should help reduce overfitting of the test set. 
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%201d.png" alt="Random forests 100 trees, 1 feature per tree, changing minSamplesLeaf" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Experiment%201d.png" alt="Random forests 100 trees, 1 feature per tree, changing minSamplesLeaf" style="width: 10px;"/>
 
 There is no clear trend with the graph, so it is harder to choose the best value. However a value of 50 gives the highest accuracy at 32.9638%, also reducing the time to generate and predict to 105 seconds, considering this improvement I will choose a value of 50 for future experiments. 
 
@@ -211,7 +211,7 @@ It seems odd to me that our best value for maximum number of features is 1, as t
 
 For this experiment I will be starting with 70 trees as this was the best found for trees without tuning any other hyperparameters.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Experiment%202a.png" alt="Changing maximum number of feature" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Experiment%202a.png" alt="Changing maximum number of feature" style="width: 10px;"/>
 
 Clearly a value of 60 performs the best here, increasing accuracy to 32.9231% compared to 31.9679% without, and a decrease in time from 210 seconds to 170 seconds.
 
@@ -235,11 +235,11 @@ It seems like 32.9638% accuracy is the best I can achieve manually tuning the pa
 
 In the end I ended up evaluating 55 random settings from the range of hyperparameters. I've decided to evaluate the settings that gave the top 20 values for accuracy to narrow down my range for the hyperparameters.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020.PNG" alt="Top 20 results from experiment 3a" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020.PNG" alt="Top 20 results from experiment 3a" style="width: 10px;"/>
 
 I seperated min_samples_leaf and n_estimators into 10 bounds, and counted the number of times each hyperparameter occured in each bound in the top 20 accuracies, and weighted each bound by the ratio of the number of times it was sampled in the 55 random settings. The results are displayed in the following graphs.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020%20in%20Graphs.PNG" alt="Top 20 results from experiment 3a in graphs" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203a%20-%20Top%2020%20in%20Graphs.PNG" alt="Top 20 results from experiment 3a in graphs" style="width: 10px;"/>
 
 A higher score for a bound in relation to other bounds for each hyperparameter suggests it is more significant to accuracy. Considering this it appears that we can reduce the bounds to 50 to 100 estimators (trees), 3 to 6 features at each split, and the minimum number of samples to be at a leaf node to 50 to 100. We will use this range in experiment 3b.
 
@@ -247,11 +247,11 @@ A higher score for a bound in relation to other bounds for each hyperparameter s
 
 I conducted the next experiment with RanomizedSearchCV with the range of hyperparameters described above. I tried 25 random settings and also included the results from 3a that were in the range being investigated in the results table. This time I looked at the results with the top 5 accuracies.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205.PNG" alt="Top 5 results from experiment 3b" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205.PNG" alt="Top 5 results from experiment 3b" style="width: 10px;"/>
 
 The best accuracy found exceeded that discovered in 3a, suggesting that we are on the right track. I analysed the parameters for the top 5 settings using the same method as before.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3b in graphs" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203b%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3b in graphs" style="width: 10px;"/>
 
 The graphs suggest that the best set of hyperparameters have 90 to 100 estimators, require 90 to 100 samples to be at a leaf, and somewhere between 3 and 4 max features. Interestingly the pattern we saw with entropy being the best criterion has reversed, with it being outperformed by gini. Considering this, for my next experiment I will investigate the ranges described and limit the criterion to gini.
 
@@ -259,7 +259,7 @@ The graphs suggest that the best set of hyperparameters have 90 to 100 estimator
 
 I conducted the next experiment with RanomizedSearchCV with the range of hyperparameters described above with 10 random settings using RandomizedSearchCV.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203c%20-%20Results.PNG" alt="Results from experiment 3c" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203c%20-%20Results.PNG" alt="Results from experiment 3c" style="width: 10px;"/>
 
 I've included all the results and no graphs this time as now we are dealing with fewer parameters and settings it is easier to analyse by looking at. One thing that imediatly jumped out at me was the top 3 results, that were all in the same range, and all exceeded the best accuracies seen so far, despite their accuracies being cross validated unlike those from all other experiments. It does not necessarily mean that there are not better results attainable in the range, but in the interest of time it seems a good idea to put a final focus on investigating a range around these results. So I've decided than in my final experiment for random forests I'll conduct GridSearchCV over the range of 95 to 100 estimators and 95 to 100 minimum samples to be at a leaf. I'll fix the maximum number of feature to 3 and use the gini criterion.
 
@@ -267,7 +267,7 @@ I've included all the results and no graphs this time as now we are dealing with
 
 Below are the top 5 results of the grid search.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%203d%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3d in graphs" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%203d%20-%20Top%205%20in%20Graphs.PNG" alt="Top 5 results from experiment 3d in graphs" style="width: 10px;"/>
 
 Unfortunately we did not see much improvement from experiment 3c, with our best found result only have a standard deviation of 0.01% lower, and an accuracy 0.01% higher. But none the less this is an improvement over 3c.
 
@@ -275,7 +275,7 @@ Unfortunately we did not see much improvement from experiment 3c, with our best 
 
 Below are the results of the best chosen hyper parameters from each of the three experiments.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forest%20Experiment%201%2C%202%2C%203%20results.PNG" alt="Results of experiments 1, 2, and 3" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forest%20Experiment%201%2C%202%2C%203%20results.PNG" alt="Results of experiments 1, 2, and 3" style="width: 10px;"/>
 
 Notie that accuracies differ slightly as I am using 4-fold cross validation, something I didn't do in experiments 1 and 2, and I suspect there's a slight difference in experiment 3 as I am using cross_val_score as opposed to GridCV, so I imagine folds are being allocated samples slightly differently. The hyper parameters chosen in experiment 3 perform the best, so we will use these as the final ones for our random forest.
 
@@ -283,13 +283,13 @@ Notie that accuracies differ slightly as I am using 4-fold cross validation, som
 
 Having decided on the best hyper parameters for the random forest, I decided to investigate the importance the forest had assigned to each of the features.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Signifance%20of%20Features%20Based%20on%20RF%20Exp%203d.PNG" alt="Importance of features based on random forest from experiment 3c" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Signifance%20of%20Features%20Based%20on%20RF%20Exp%203d.PNG" alt="Importance of features based on random forest from experiment 3c" style="width: 10px;"/>
 
 The results are somewhat surprising, with features relating to bollinger bands being far more significant than other features. Their significance does make sense though, with pDiff20SMAAbsBB capturing the squeeze of the bollinger bands which is indicative of volatility, and pDiffCloseUpperBB being the difference between upper bollinger band and the closing price, which can be indicative of a stock being overbought when closer to the upper band, which would point to a fall in price following shortly. The difference of the lower band from the closing price being less significant is somewhat confusing, but this may be because a lot of information can be gathered from the the upper band when the closing price is much smaller than it. 
 
 One thing that I struggled to decide when first implementing the technical indicators was the period for each of them to capture. All but RSI rely on an EMA's or SMA's, and the smaller periods these capture the more sensitive they are to change, and the larger the less sensitive they are. I decided to leave them at default values when I implemented them, but I decided now it was worth seeing if there was any pattern between the period they captured and the significance of them to the forest.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Signifance%20of%20Features%20compared%20to%20period.PNG" alt="Comparison of feature significance to period length" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Signifance%20of%20Features%20compared%20to%20period.PNG" alt="Comparison of feature significance to period length" style="width: 10px;"/>
 
 There seems like there might be some pattern, with the 5 most significant features having a period in the range of 10 to 20. Considering this I decided it was worth experimenting with the worst performing indicators, the stochastic oscilator and the MACD. I made a faster MACD, halving the period length of the slow and fast line to 6 and 13 periods respectively, and a slower stochastic oscilator, quadrupling the slow and fast period to 12 and 20 days respectively.
 
@@ -311,7 +311,7 @@ So instead of comparing gradients directly I will compare the rate of change of 
 
 I have also formalised the information in the last paragraph into mathematics to make it clearer.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Maths/OBV%20supporting%20equations.PNG" alt="Equations that support OBV formalised into maths" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Maths/OBV%20supporting%20equations.PNG" alt="Equations that support OBV formalised into maths" style="width: 10px;"/>
 
 Using all of the above I will assign each sample into one of four categories:
 
@@ -324,7 +324,7 @@ I am not certain what value of n will perform best, so I've decided to add featu
 
 Disappointingly using training a random forest with our best features and testing using 4 fold cross validation with the new features and all the previous ones, accuracy only increased by around 0.01% and standard deviation increased by 0.02%. The significance assigned to each feature suggests to us the issue is not the hyperparameters, with the new features each being assigned a significance of around 1/15th of the previous least significant features.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20OBV%20Predictors.PNG" alt="Bar chart of significance of adding OBV related features" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20OBV%20Predictors.PNG" alt="Bar chart of significance of adding OBV related features" style="width: 10px;"/>
 
 I tried tweaking the threshold to classify the OBV gradient as flat, trying 0.01 and 0.1, but neither gave much improvement on using a value of 0.05. I thought about what might be wrong, and came to the conclusion it may be to do with how the gradient is calculated as flat. Dividing the gradient by the average of the absolute OBV works if the OBV is oscillating around 0. But over time successful stocks trend towards very large values of OBV's, meaning that the OBVGradRatio becomes very small. Consequently I decided to try without considering whether the gradient is flat, just going based on if its positive or negative, to see if we would see any improvement in performance.
 
@@ -336,7 +336,7 @@ Note that this section continues on from the previous.
 
 Suprisingly using the raw gradients as features proved successful, as we see below, with each feature having a significance of around 2%.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients.PNG" alt="Bar chart of significance of adding gradients" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients.PNG" alt="Bar chart of significance of adding gradients" style="width: 10px;"/>
 
 It is worth noting that the accuracy only increases by 0.1% using 4-fold cross validation, but I have not retuned the hyperparameters so I am not too concerned about this. 
 
@@ -344,11 +344,11 @@ I investigated to see if I could workout why I was wrong and features containing
 
 The bar chart is ordered from left to right from most significant to least significant, and interestingly it seems to suggest that the longer the period examined, the more significant the gradient. As a result of this observation, I decided it was worth investigating larger period lengths. So I tried increasing to 20, 35, and 50 day periods, to see if significance increased further.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients%2020%2C%2035%2C%2050.PNG" alt="Bar chart of significance of adding gradients of longer periods" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Adding%20Gradients%2020%2C%2035%2C%2050.PNG" alt="Bar chart of significance of adding gradients of longer periods" style="width: 10px;"/>
 
 The significance of the OBV gradients does not change much, but the significance of the gradients of the adjusted close increases significantly. Consequently I've decided I will include the adjusted close gradients of 5, 8, 13, 20, 35, and 50, and will keep with the OBV gradients of 5, 8, and 13. Below are the significance of including those features.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Final%20Gradients.PNG" alt="Bar chart of significance of adding final gradients" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Significance%20of%20Final%20Gradients.PNG" alt="Bar chart of significance of adding final gradients" style="width: 10px;"/>
 
 For the record, these features increase accuracy using 4-fold cross validation to 33.0955%, and decrease standard deviation to 0.2366%. This is only a minor improvement, but there should be a more substantial improvement when we retune the hyperparameters.
 
@@ -360,7 +360,7 @@ Up until now I have only been using technical indicators to make predictions, bu
 
 As I will be using a slightly different period I have rerun the same tests I performed in the last experiment with the new set of data. There is little variation, with the accuracy using 4-fold cross validation being 33.0197% with a standard deviation of 0.2874%. The feature significances do not change much either, but are displayed below for reference anyway.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20-%20Significance%20Before%20Adding%20Fundamentals.PNG" alt="Bar chart of significance of features using funamentals data set" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20-%20Significance%20Before%20Adding%20Fundamentals.PNG" alt="Bar chart of significance of features using funamentals data set" style="width: 10px;"/>
 
 ### Cleaning up the data
 
@@ -372,17 +372,17 @@ The other important thing to consider is handling missing data, as each row in t
 
 To start with I tried using all 53 ratios I had collected from the WRDS database. The results are displayed below:
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20all%20ratios.PNG" alt="Table of results of retuning hyperparameters with all ratios" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20with%20all%20ratios.PNG" alt="Table of results of retuning hyperparameters with all ratios" style="width: 10px;"/>
 
 Clearly the default parameters we used in previous experiments, but even after reoptimising, tripling the number of features and estimators the new features made the model worse. I suspect this was because a lot of them weren't relevant and were just adding noise, so I did some research and selected 12 of the 56 ratios to keep, you can see the full list of those I kept in the spreadsheet in Results\Random Forests\Adding financial ratios.xlsx in the Believed Significant Features tab. I first tried the hyperparameters I had chosen when first tuning and the results were promising, with only a 0.1% drop off in accuracy despite increasing the number of features by 50%. Next I experimented with a larger range of estimators and features than I had before, to see if I could beat previous scores, and you can see the results below.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20selected%20ratios.PNG" alt="Table of results of retuning hyperparameters with selected ratios" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20with%20selected%20ratios.PNG" alt="Table of results of retuning hyperparameters with selected ratios" style="width: 10px;"/>
 
 I managed to, but I only achieved around a 0.01% increase in accuracy. As a result of this I suspect I have exhausted any improvement in accuracy I can gain using random forests. As a result I will now focus on building a neural network, but as a final experiment I will try using a much larger range of estimators and features when building the random forests, experimenting with between 500 and 1000 estimators, and 6 to 17 maximum features at each split. Training these and evaluating them using 4-fold cross validation will take a lot of time, so I will make use of Google Compute Engine and run this experiment on the cloud in virtual machines.
 
 The top 10 results of 26 are displayed below, and somewhat unsurprisingly we only gained an increase 0.1% in accuracy, suggesting that we have exhausted any increase we can get from random forests. 
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Random%20Forest/Random%20Forests%20with%20selected%20ratios%20extended%20search.PNG" alt="Table of results of extended search of retuning hyperparameters with selected ratios" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Random%20Forest/Random%20Forests%20with%20selected%20ratios%20extended%20search.PNG" alt="Table of results of extended search of retuning hyperparameters with selected ratios" style="width: 10px;"/>
 
 ## Predicting using neural networks
 
@@ -394,7 +394,7 @@ To start with I used the Adam optimizer, as this seemed like the simplest optimi
 
 I started by running 60 iterations of RandomizedSearchCV experimenting with modifying the number of neurons and epochs, the activation function, the batch size, whether to use L1 or L2 regularization, and what value of lambda to use for regularization. Below are the top 10 results.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Top%2010%20results%20from%20random%20search%20of%20single%20hidden%20layer.PNG" alt="Top 10 results from random search for a neural network with a single hidden layer" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Top%2010%20results%20from%20random%20search%20of%20single%20hidden%20layer.PNG" alt="Top 10 results from random search for a neural network with a single hidden layer" style="width: 10px;"/>
 
 Noticably the top 10 is dominated by networks using rectified linear units as the hidden layer. As a result I decided to retune the best result to see if I could improve the accuracy further.
 
@@ -404,47 +404,47 @@ It is infeasible to tune hyperparameters using the whole network, so I used a sa
 
 Consequently I decided to optimise using 10% of the data. But first I decided to tune the number of epochs using the whole dataset. The results are displayed below.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%204%20-%20Changing%20Number%20of%20Epochs.png" alt="Effect of changing the number of epochs" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%204%20-%20Changing%20Number%20of%20Epochs.png" alt="Effect of changing the number of epochs" style="width: 10px;"/>
 
 This proved to be successful, with 200 epochs giving the best accuracy of 32.0992%, with a standard deviation of 0.1491%. This also significantly reduced training times, with it reducing time to train the network from 200 minutes to 80 minutes, a significant improvement. This also made it much more feesible to tune hyperparameters using 10% of the data.
 
 To start with I trained the network with the new optimal found hyperparameters to give a baseline value. I found the accuracy to be 31.9259% with a standard deviation of 0.372%. This was very close to the accuracy found using the whole dataset suggesting the sample size was suitably large. Next I retuned the number of neurons.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%205%20-%20Changing%20Number%20of%20Neurons.png" alt="Effect of changing the number of neurons" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%205%20-%20Changing%20Number%20of%20Neurons.png" alt="Effect of changing the number of neurons" style="width: 10px;"/>
 
 There is quite a lot of noise in the graph, but the increase in accuracy appears to plateu after around 40 neurons. But I decided to use 75 neurons as this gave the lowest standard deviation of 0.167%, and also gave a mean accuracy of 32.178%
 
 Next I attempted to retune regularization, trying both L1 and L2 regularization with a range of values of lambda, you can see the results in the results folder in images for experiments 6 and 7 respectively. I have only included the results for L2 (experiment 7) below, as they both show the same trend, with accuracy continuing to increase as lambda decreased.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%207%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%207%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
 
 I hypothesised this might have been because in combination regularization and dropout led to underfitting, so I tried setting lambda to 0, and sure enough the accuracy increased to 32.232% with a standard deviation of 0.291%.
 
 Consequently next I decided to retune the dropout rate, using a value of 0 for lambda so that regularization did not intefere with the experiment.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%208%20-%20Changing%20Dropout%20Rate.png" alt="Effect of changing the dropout rate" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%208%20-%20Changing%20Dropout%20Rate.png" alt="Effect of changing the dropout rate" style="width: 10px;"/>
 
 I found that setting the dropout rate to 0.3 gave the best accuracy of 32.297% with a standard deviation of 0.326%.
 
 I decided it was worth also experimenting with L1 and L2 regularization without dropout to see which of the three performed the best. Consequently I set the dropout rate to 0, and tried a range of values for lambda. Note that each value of the y-axis was attained using a value of lambda of 10^(-x).
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%209%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%209%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization" style="width: 10px;"/>
 
 I found that 0.001 that using 0.001 as the value for lambda gave the best accuracy of 32.232% with a standard deviation of 0.291%.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2010%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2010%20-%20Changing%20L2.png" alt="Effect of changing the value of lambda with L2 regularization" style="width: 10px;"/>
 
 I found that using 0.001 as the value for lambda gave the best stable accuracy of 32.128% with a standard deviation of 0.271%.
 
 Of the three dropout appears to perform the best, so I used that with a dropout rate of 0.3. But I decided it was worth seeing if any greater accuracy could be achieved using the new dropout rate and L1 regularization, so I investigated this. Note that in the graph below, the value of lambda for each value of x corresponds to 10^(-x).
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization and dropout" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Effect of changing the value of lambda with L1 regularization and dropout" style="width: 10px;"/>
 
 From the above I found that a value of 10^-9 gave the best accuracy, giving a mean accuracy of 32.361% with a standard deviation of 0.229%.
 
 Next I retuned the number of neruons again, in case the change in dropout and regularization choice meant the optimal value changes.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Changing the number of neurons" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2011%20-%20Changing%20L1.png" alt="Changing the number of neurons" style="width: 10px;"/>
 
 From the above I discovered the new optimal was 60 neurons, giving a mean accuracy of 32.327% and a standard deviation of 0.211%. It is worth noting this accuracy is lower than that found in the last experiment, but this is probably down to the random numbers used being slightly different.
 
@@ -452,21 +452,21 @@ Next I tried to retune the batch size and number of epochs using the whole train
 
 The first experiment used a batch size of 756.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2013%20-%20Number%20of%20epochs%20(756%20batch%20size).png" alt="Changing the number of epochs with a batch size of 756" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2013%20-%20Number%20of%20epochs%20(756%20batch%20size).png" alt="Changing the number of epochs with a batch size of 756" style="width: 10px;"/>
 
 The second experiment used a batch size of 512.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2014%20-%20Number%20of%20epochs%20(512%20batch%20size).png" alt="Changing the number of epochs with a batch size of 512" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2014%20-%20Number%20of%20epochs%20(512%20batch%20size).png" alt="Changing the number of epochs with a batch size of 512" style="width: 10px;"/>
 
 And the third a batch size of 256.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2015%20-%20Number%20of%20epochs%20(256%20batch%20size).png" alt="Changing the number of epochs with a batch size of 256" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2015%20-%20Number%20of%20epochs%20(256%20batch%20size).png" alt="Changing the number of epochs with a batch size of 256" style="width: 10px;"/>
 
 I found that changing the batch size had very little impact on accuracy, but increased training time significantly. Consequently I went with a batch size of 756, as it was the fastest too train, and also yielded the highest accuracy of 32.715% with a standard deviation of 0.225% in 200 epochs.
 
 In experiments 16 to 26 I retuned the learning rate and number of epochs. I have omitted most of the results here as several experiments proved unsuccessfuly, for example trying to tune using cross-validation and only on a sample of the training set proved unsuccessfuly, and in the end I used the whole training set for tuning, using the validation set to validate the training set wasn't being overfitted. In the end a learning rate of 10^-4 proved optimal training over 4390 epochs, which gave an accuracy on the validation set of around 32.87%. The full results for the whole range of epochs are displayed below.
 
-<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/Neural%20Networks/Experiment%2024%20-%20Changing%20the%20number%20of%20epochs.PNG" alt="Changing the number of epochs with a learning rate of 10^-4" style="width: 10px;"/>
+<img src="https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Results/4-class%20problem/Neural%20Networks/Experiment%2024%20-%20Changing%20the%20number%20of%20epochs.PNG" alt="Changing the number of epochs with a learning rate of 10^-4" style="width: 10px;"/>
 
 Note that the graph above is slightly different from the usual, as I made use of TensorBoard for training which reports the validation accuracy after every epoch. The bold line is the smoothed accuracy for each epoch (with a smoothing factor of 0.9), and the faint line is the true values of accuracy.
 
