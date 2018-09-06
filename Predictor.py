@@ -59,6 +59,16 @@ def graphChangeInAccs(values, results, xlbl, cv=True):
         plt.show()
 
 
+def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
+    KSCV = KerasSearchCV.Host(path, pickle_path, True)
+    if KSCV.file_found:
+        KSCV.change_threads_memory(self.threads, self.total_memory)
+        KSCV.start()
+        return KSCV.getResults()
+    else:
+        return None
+
+
 def RandomSearchCVToCSV(RSCV):
     line = ""
     for parameter in RSCV.grid_scores_[0].parameters.keys():
@@ -398,6 +408,21 @@ class RandomForestClassifierMethods(Classifier):
         else:
             return {'scores': scores, 'acc': acc, 'std': std}
 
+    def random_search(self, n_estimators, max_features, min_samples_leaf, iterations=10, seed=0, cv=4,
+                      path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
+        param_grid = {'n_estimators': n_estimators, 'max_features': max_features, 'min_samples_leaf': min_samples_leaf}
+        if cv == 1:
+            validX = self.validX
+            validY = self.validY
+        else:
+            validX = None
+            validY = None
+        kscv = KerasSearchCV.Host(path, pickle_path)
+        kscv.create_new_sklearn(self.trainX, self.trainY, RandomForestClassifier, "random", param_grid, iterations, cv,
+                                self.n_jobs, seed, validX, validY)
+        kscv.start()
+        return kscv.getResults()
+
 
 class NeuralNetworkClassifierMethods(Classifier):
 
@@ -558,15 +583,6 @@ class NeuralNetworkClassifierMethods(Classifier):
                         histogram_freq=histogram_freq)
         KSCV.start()
         return KSCV.getResults()
-
-    def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
-        KSCV = KerasSearchCV.Host(path, pickle_path, True)
-        if KSCV.file_found:
-            KSCV.change_threads_memory(self.threads, self.total_memory)
-            KSCV.start()
-            return KSCV.getResults()
-        else:
-            return None
 
     class CustomLayer:
         def __init__(self, L2, lmbda, neurons, activation):
