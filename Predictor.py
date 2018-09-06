@@ -59,10 +59,9 @@ def graphChangeInAccs(values, results, xlbl, cv=True):
         plt.show()
 
 
-def continue_search(self, path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
+def continue_search(path=os.path.dirname(os.path.abspath(__file__)), pickle_path="KSCV.pickle"):
     KSCV = KerasSearchCV.Host(path, pickle_path, True)
     if KSCV.file_found:
-        KSCV.change_threads_memory(self.threads, self.total_memory)
         KSCV.start()
         return KSCV.getResults()
     else:
