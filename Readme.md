@@ -48,9 +48,13 @@ The following table lists all features related to technical indicators. These ar
 | adjClosePChange                                 | Percentage change in closing price since the previous trading day              |
 | pDiffClose5SMA, pDiffClose8SMA, pDiffClose13SMA | Percentage difference between the closing price and the 5, 8, and 13 day SMA's |
 | rsi                                             | Relative strength index                                                        |
-| pDiffCloseUpperBB, pDiffCloseLowerBB, pDiff20SMAAbsBB | All features relate to bollinger bands, see the section on adding them for details |
-| macdHist, deltaMacdHist                         | All features relate to moving average convergance and divergance, see the section on adding them for details |
-| stochPK, stochPD                                | All features relate to the stochastic oscillator, see the section on adding them for details |
+| pDiffCloseUpperBB                               | Percentage difference between the upper bollinger band and adjusted closing price |
+| pDiffCloseLowerBB                               | Percentage difference between the lower bollinger band and adjusted closing price |
+| pDiff20SMAAbsBB                                 | Percentage difference between the upper bollinger band and the 20-day SMA used to calculated the bollinger bands |
+| macdHist                                        | The value for the macd histogram |
+| deltaMacdHist                                   | The change in the macd histogram since the last trading day |
+| stochPK                                         | The value of %k for the full stochastic oscilator |
+| stochPD                                         | The value of %d for the full stochastic oscilator |
 | adx                                             | Average directional index                                                      |
 | pDiffPdiNdi                                     | The percentage difference of the postivie directional indicator from the negative directional indicator used in ADX |
 | obvGrad5, obvGrad8, obvGrad13                   | The gradient of 5, 8, and 13 day SMA's for on-balance volume                   |
@@ -86,6 +90,7 @@ The 4 class problem is described at the beginning of KNN, but in brief we are tr
 |:------------------------------------:|:-------:|:--------------------:|
 | Random forest                        | 650 estimators, 100 min samples per leaf, 9 max features per split | 33.311% |
 | Neural network with one hidden layer | layers: \[input: 38 neurons -> hidden layer: 60 neurons, relu -> dropout layer: 0.3 dropout rate -> output layer: 4 neurons, softmax\], batch size of 756, learning rate of 10^-4, 4390 epochs, L1 regularization with a value of 10^-9 for lambda | 32.835% |
+| Neural network with two hidden layers | layers: \[input: 38 neurons -> hidden layer: 70 neurons, leaky relu -> dropout layer: 0.08 dropout rate -> hidden layer: 70 neurons, leaky relu -> dropout layer: 0.08 dropout rate -> output layer: 4 neurons, softmax\], batch size of 756, learning rate of 10^-4, 1855 epochs | 33.526% |
 
 ## Predicting using KNN
 I have decided to try KNN as it is very simple to train, this will also give me a target to beat when training my neural network. I will classify the the percentage change in closing price tomorrow as one of four of the following classes:
