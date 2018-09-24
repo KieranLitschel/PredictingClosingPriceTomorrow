@@ -1,6 +1,6 @@
 # Table of Contents
 * [**Introduction**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#introduction)
-* **Future plans**
+* [**Future plans**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#future-plans)
 * [**Progress Log**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#progress-log)
   * [**Summary of key results**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#summary-of-key-results)
     * [**The final feature set**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#the-final-feature-set)
