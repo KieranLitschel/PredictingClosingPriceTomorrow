@@ -30,6 +30,7 @@
   * [**Predicting using neural networks**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow#predicting-using-neural-networks)
     * [**Results of random search for neural network with one hidden layer**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#results-of-random-search-for-network-with-one-hidden-layer)
     * [**Tuning network with one hidden layer**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#tuning-network-with-one-hidden-layer)
+    * [**Tuning network with two hidden layers**](https://github.com/KieranLitschel/PredictingClosingPriceTomorrow/blob/master/Readme.md#tuning-network-with-2-hidden-layers)
     
 # Introduction
 
