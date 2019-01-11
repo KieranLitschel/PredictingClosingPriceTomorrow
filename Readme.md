@@ -49,6 +49,10 @@ In early September 2018 I started back at university, and I imagine won't have a
 * One thing I could consider is using a different metric to optimise performance for. For example instead of accuracy I could optimize to reduce the difference of the predicted band from the true band. This might be particularly useful as I have noticed the classifiers all find it hard to differentiate between a fall by more than 1% and a rise by more than 1%, and a different kind of metric would help overcome this.
 * I could also attempt using logistic regression again for the 2-class problem by first converting non-linearly seperable features to linearly seperable features by visualizing them and looking where I can apply basis function to transform the data to be linearly seperable.
 
+UPDATE:
+
+I decided it's better to try and broaden my skill set than to continue to work on the same project, so I've began work on another project, attempting to make predictions using news articles. You can see this project [here](https://github.com/KieranLitschel/PredictingPriceChangeFromNews).
+
 # Progress Log
 ## Summary of key results
 
