@@ -12,7 +12,7 @@ grpcio==1.14.1
 idna==2.7
 KerasSearchCV==0.1
 kiwisolver==1.0.1
-lxml==4.2.3
+lxml==4.6.3
 Markdown==2.6.11
 matplotlib==2.2.2
 mock==2.0.0
