@@ -20,7 +20,7 @@ mysql-connector-python==8.0.11
 numpy==1.14.5
 pandas==0.23.3
 pbr==4.2.0
-protobuf==3.6.1
+protobuf==3.18.3
 psycopg2==2.7.5
 pyparsing==2.2.0
 pyreadline==2.1
